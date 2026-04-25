@@ -1537,6 +1537,45 @@ body::before{
   transition:var(--transition);margin-bottom:24px;
 }
 .btn-dl-conservation:hover{opacity:.9;transform:translateY(-1px);}
+/* Bloc conservation en bas de la page liste */
+.conservation-cta{
+  margin-top:28px;
+  background:white;
+  border:1px solid rgba(45,74,50,.08);
+  border-radius:var(--radius-md);
+  padding:24px 28px;
+  box-shadow:var(--shadow-sm);
+}
+.conservation-cta-header{
+  display:flex;align-items:center;gap:14px;margin-bottom:6px;
+}
+.conservation-cta-icon{
+  width:42px;height:42px;border-radius:50%;
+  background:var(--green-mist);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;flex-shrink:0;
+}
+.conservation-cta-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.2rem;font-weight:600;color:var(--dark);
+}
+.conservation-cta-sub{
+  font-size:.8rem;color:var(--muted);
+  font-weight:300;line-height:1.55;
+  margin-bottom:16px;
+}
+.btn-export-conservation{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;
+  background:var(--green-deep);color:white;
+  border:none;border-radius:var(--radius-sm);
+  font-family:'DM Sans',sans-serif;font-size:.75rem;
+  font-weight:500;letter-spacing:1px;
+  cursor:pointer;transition:var(--transition);
+  box-shadow:0 4px 14px rgba(45,74,50,.2);
+}
+.btn-export-conservation:hover{background:var(--green-mid);transform:translateY(-1px);}
+.btn-export-conservation svg{flex-shrink:0;}
 
 /* ═══ VOICE NOTES ═══ */
 .voice-btn{
@@ -1590,6 +1629,94 @@ body::before{
   font-size:.78rem;color:var(--muted);margin-top:4px;font-weight:300;
 }
 
+/* ═══ ONBOARDING TOUR ═══ */
+.tour-overlay{
+  position:fixed;inset:0;z-index:1000;
+  pointer-events:none;
+}
+.tour-backdrop{
+  position:fixed;inset:0;z-index:999;
+  background:rgba(26,26,22,.38);
+  backdrop-filter:blur(2px);
+  pointer-events:all;
+}
+.tour-spotlight{
+  position:fixed;z-index:1001;
+  border-radius:8px;
+  box-shadow:0 0 0 4000px rgba(26,26,22,.38);
+  pointer-events:none;
+  transition:all .4s cubic-bezier(.4,0,.2,1);
+}
+.tour-bubble{
+  position:fixed;z-index:1002;
+  background:white;
+  border-radius:var(--radius-lg);
+  padding:22px 24px 18px;
+  max-width:300px;width:90vw;
+  box-shadow:0 20px 60px rgba(26,26,22,.25);
+  animation:bubbleIn .3s cubic-bezier(.4,0,.2,1) both;
+  pointer-events:all;
+}
+@keyframes bubbleIn{
+  from{opacity:0;transform:scale(.92) translateY(8px);}
+  to{opacity:1;transform:scale(1) translateY(0);}
+}
+.tour-bubble::before{
+  content:'';position:absolute;
+  width:12px;height:12px;background:white;
+  transform:rotate(45deg);
+}
+.tour-bubble.arrow-top::before{top:-6px;left:28px;}
+.tour-bubble.arrow-bottom::before{bottom:-6px;left:28px;}
+.tour-bubble.arrow-left::before{left:-6px;top:24px;}
+.tour-bubble.arrow-right::before{right:-6px;top:24px;}
+.tour-bubble.arrow-top-right::before{top:-6px;right:28px;}
+.tour-bubble.arrow-bottom-right::before{bottom:-6px;right:28px;}
+.tour-step-label{
+  font-size:.58rem;letter-spacing:2px;text-transform:uppercase;
+  color:var(--terracotta);font-weight:600;margin-bottom:6px;
+}
+.tour-step-dots{
+  display:flex;gap:4px;margin-bottom:12px;
+}
+.tour-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--green-pale);transition:all .2s;
+}
+.tour-dot.active{background:var(--green-deep);width:16px;border-radius:3px;}
+.tour-dot.done{background:var(--green-soft);}
+.tour-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.15rem;font-weight:600;color:var(--dark);
+  margin-bottom:6px;line-height:1.3;
+}
+.tour-desc{
+  font-size:.8rem;color:var(--muted);font-weight:300;
+  line-height:1.6;margin-bottom:16px;
+}
+.tour-desc strong{color:var(--text);font-weight:500;}
+.tour-actions{display:flex;align-items:center;gap:8px;}
+.tour-btn-next{
+  flex:1;padding:9px 16px;
+  background:var(--green-deep);color:white;
+  border:none;border-radius:var(--radius-sm);
+  font-family:'DM Sans',sans-serif;font-size:.72rem;
+  font-weight:500;letter-spacing:1px;cursor:pointer;
+  transition:var(--transition);
+}
+.tour-btn-next:hover{background:var(--green-mid);}
+.tour-btn-skip{
+  background:none;border:none;cursor:pointer;
+  font-size:.72rem;color:var(--muted);
+  font-family:'DM Sans',sans-serif;
+  text-decoration:underline;white-space:nowrap;
+  padding:4px;
+}
+.tour-btn-skip:hover{color:var(--text);}
+.tour-progress{
+  font-size:.68rem;color:var(--muted);
+  margin-left:auto;white-space:nowrap;
+}
 /* ═══ TOAST ═══ */
 .toast{
   position:fixed;bottom:28px;right:28px;
@@ -1844,7 +1971,7 @@ body::before{
 
   /* ─── WhatsApp bubble — au dessus de la nav basse ─── */
   #wa-float{
-    bottom:160px;
+    bottom:220px;
     right:16px;width:46px;height:46px;
   }
   #wa-float svg{width:22px;height:22px;}
@@ -2147,6 +2274,23 @@ body::before{
         </div>
         <div id="liste-content"><div class="no-content"><h3>Aucun plat sélectionné</h3><p>Choisissez vos plats dans <a onclick="showPage('menu')" style="color:var(--sage-deep);cursor:pointer;">la page Menus</a></p></div></div>
       </div>
+
+      <!-- BLOC FICHE CONSERVATION -->
+      <div class="conservation-cta no-print" id="conservation-cta" style="display:none;">
+        <div class="conservation-cta-header">
+          <div class="conservation-cta-icon">❄️</div>
+          <div class="conservation-cta-title">Fiche de conservation</div>
+        </div>
+        <div class="conservation-cta-sub">
+          Téléchargez votre fiche personnalisée avec l'ordre de consommation conseillé, les durées de conservation et les instructions de réchauffage pour chacun de vos plats.
+        </div>
+        <button class="btn-export-conservation" onclick="exportConservationJPG()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+          Télécharger en image
+        </button>
+      </div>
     </div>
 
     <!-- PAGE PLANNING (CLIENT) -->
@@ -2238,8 +2382,9 @@ body::before{
             <button class="btn btn-primary" onclick="saveProfilPwd()">Changer le mot de passe</button>
           </div>
         </div>
-        <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(45,74,50,.08);">
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(45,74,50,.08);display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
           <button class="btn btn-ghost" onclick="doLogout()" style="width:auto;color:var(--error);border-color:rgba(176,58,46,.25);">Se déconnecter</button>
+          <button class="btn btn-ghost btn-sm" onclick="replayTour()" style="width:auto;">Revoir le tour ▶</button>
         </div>
       </div>
 
@@ -2601,6 +2746,21 @@ body::before{
       </button>
     </div>
   </nav>
+
+  <!-- ONBOARDING TOUR -->
+  <div id="tour-backdrop" class="tour-backdrop" style="display:none;" onclick="tourSkip()"></div>
+  <div id="tour-spotlight" class="tour-spotlight" style="display:none;"></div>
+  <div id="tour-bubble" class="tour-bubble" style="display:none;">
+    <div class="tour-step-label" id="tour-label"></div>
+    <div class="tour-step-dots" id="tour-dots"></div>
+    <div class="tour-title" id="tour-title"></div>
+    <div class="tour-desc" id="tour-desc"></div>
+    <div class="tour-actions">
+      <button class="tour-btn-skip" onclick="tourSkip()">Passer</button>
+      <span class="tour-progress" id="tour-progress"></span>
+      <button class="tour-btn-next" id="tour-btn-next" onclick="tourNext()">Suivant →</button>
+    </div>
+  </div>
 
   <!-- BANDEAU VISITEUR -->
   <div class="visitor-bar" id="visitor-bar" style="display:none;">
@@ -3131,6 +3291,7 @@ function loginUser(user){
     archiveCurrentMenu();
     const mn=document.getElementById('mob-nav');
     if(mn)mn.style.display='block';
+    checkAndStartTour();
   }
   if(user.role==='admin'){
     showPage('admin');
@@ -3417,6 +3578,9 @@ function renderListe(){
   data.dishes.forEach(d=>{html+=`<span class="liste-dish-tag">${d.emoji||'🍽'} ${d.name}</span>`;});
   html+='</div>';
   content.innerHTML=html;
+  // Afficher le bloc conservation si des plats sont sélectionnés
+  const ccta=document.getElementById('conservation-cta');
+  if(ccta) ccta.style.display=data?'block':'none';
 }
 
 function toggleCheck(checkId,nameId){
@@ -3439,6 +3603,59 @@ function exportJPG(){
   showToast('Génération de l\'image…');
   html2canvas(el,{scale:2,backgroundColor:'#FFFFFF',useCORS:true}).then(canvas=>{
     const a=document.createElement('a');a.download='liste-courses-cooksup.jpg';a.href=canvas.toDataURL('image/jpeg',0.92);a.click();showToast('Image téléchargée ✓','success');
+  });
+}
+
+function exportConservationJPG(){
+  const sel=getSelections();
+  const dishes=STATE.dishes.filter(d=>sel.includes(d.id));
+  if(!dishes.length){showToast('Aucun plat sélectionné','error');return;}
+  const sorted=[...dishes].sort((a,b)=>(a.conservation||4)-(b.conservation||4));
+  const today=new Date();
+  const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const dateStr=today.getDate()+' '+mois[today.getMonth()]+' '+today.getFullYear();
+  let rows='';
+  sorted.forEach(function(dish,i){
+    const cons=dish.conservation||4;
+    const congel=dish.congel||'non';
+    const reheat=dish.reheat||'Réchauffer à feu doux ou au micro-ondes.';
+    const eatDate=new Date(today);
+    eatDate.setDate(today.getDate()+Math.floor(i*(cons/dishes.length)));
+    const dayLabel=i===0?'Aujourd\'hui \/ Demain':eatDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    const badge='J+'+(i===0?'0':Math.ceil((eatDate-today)/(86400000)));
+    rows+='<div style="background:white;border:1px solid #C8D9C9;border-radius:6px;padding:16px;margin-bottom:10px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #EDF2ED;">'
+      +'<span style="font-size:1.4rem;">'+(dish.emoji||'🍽')+'</span>'
+      +'<div style="flex:1;"><div style="font-size:.95rem;font-weight:600;color:#1A1A16;">'+dish.name+'</div>'
+      +'<div style="font-size:.68rem;color:#B87355;">'+dish.cat+'</div></div>'
+      +'<span style="background:#EDF2ED;color:#2D4A32;font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:20px;">'+badge+'</span></div>'
+      +'<div style="font-size:.78rem;color:#3A3830;line-height:1.9;">'
+      +'<div>📅 <strong>Consommer :</strong> '+dayLabel+'</div>'
+      +'<div>🕐 <strong>Conservation :</strong> '+cons+' jour'+(cons>1?'s':'')+' au frigo</div>'
+      +'<div>❄️ <strong>Congélation :</strong> '+(congel==='oui'?'Possible':'Non recommandée')+'</div>'
+      +'<div>🔥 <strong>Réchauffage :</strong> '+reheat+'</div>'
+      +'</div></div>';
+  });
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;left:-9999px;top:0;width:600px;background:#FAF7F0;padding:36px;font-family:Georgia,serif;color:#1A1A16;';
+  el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #C8D9C9;">'
+    +'<div><div style="font-size:1.7rem;font-weight:300;color:#2D4A32;letter-spacing:2px;">Cook\'sUP</div>'
+    +'<div style="font-size:.68rem;color:#8A8578;margin-top:2px;letter-spacing:1px;text-transform:uppercase;">Fiche de conservation</div></div>'
+    +'<div style="text-align:right;font-size:.75rem;color:#8A8578;line-height:1.8;">'+(currentUser?currentUser.name:'')+'<br>'+dateStr+'<br><strong style="color:#2D4A32;">'+dishes.length+' plat'+(dishes.length>1?'s':'')+'</strong></div></div>'
+    +rows
+    +'<div style="margin-top:16px;padding-top:14px;border-top:1px solid #C8D9C9;font-size:.68rem;color:#8A8578;text-align:center;">Cook\'sUP — cooks.up.paris@gmail.com — '+dateStr+'</div>';
+  document.body.appendChild(el);
+  showToast('Génération de la fiche…');
+  html2canvas(el,{scale:2,backgroundColor:'#FAF7F0',useCORS:true}).then(function(canvas){
+    document.body.removeChild(el);
+    const a=document.createElement('a');
+    a.download='fiche-conservation-cooksup-'+today.toISOString().split('T')[0]+'.jpg';
+    a.href=canvas.toDataURL('image/jpeg',0.92);
+    a.click();
+    showToast('Fiche téléchargée ✓','success');
+  }).catch(function(){
+    if(document.body.contains(el)) document.body.removeChild(el);
+    showToast('Erreur lors de la génération','error');
   });
 }
 
@@ -4687,9 +4904,286 @@ async function redoMenu(dishIds){
 // ══════════════════════════════════════════════
 //  MESSAGE PERSONNALISÉ
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  ONBOARDING TOUR
+// ══════════════════════════════════════════════
+const TOUR_STEPS = [
+  {
+    label:'Bienvenue 🎉',
+    title:'Bienvenue sur Cook\'sUP Planner !',
+    desc:'Imene a préparé ce petit tour pour vous montrer comment profiter au maximum de votre espace. <strong>2 minutes</strong> et vous saurez tout !',
+    target:null, // Centré
+    arrow:'',
+    page:'menu'
+  },
+  {
+    label:'La carte du mois',
+    title:'Découvrez la carte du mois',
+    desc:'Chaque mois, Imene publie ses plats. <strong>Cliquez sur un plat</strong> pour le sélectionner — vous pouvez en choisir autant que vous voulez.',
+    target:'#menu-weeks-area .dish-card',
+    arrow:'arrow-top',
+    page:'menu'
+  },
+  {
+    label:'Nombre de personnes',
+    title:'Adaptez les quantités',
+    desc:'Ajustez le nombre de personnes ici — <strong>votre liste de courses se recalcule automatiquement</strong> selon vos convives.',
+    target:'.persons-bar',
+    arrow:'arrow-top',
+    page:'menu'
+  },
+  {
+    label:'Voir les ingrédients',
+    title:'Explorez les ingrédients',
+    desc:'Sur chaque plat, cliquez sur <strong>"Voir les ingrédients"</strong> pour consulter la liste, en retirer ou en ajouter selon vos envies.',
+    target:'.dish-expand-btn',
+    arrow:'arrow-top',
+    page:'menu'
+  },
+  {
+    label:'Ma liste de courses',
+    title:'Votre liste générée automatiquement',
+    desc:'Accédez à <strong>Ma liste</strong> pour voir tous vos ingrédients regroupés par catégorie, calculés pour le bon nombre de personnes.',
+    target:'#mobt-liste',
+    targetDesktop:'#navb-liste',
+    arrow:'arrow-bottom',
+    page:'liste'
+  },
+  {
+    label:'Télécharger & Partager',
+    title:'Exportez votre liste',
+    desc:'Téléchargez votre liste en image, <strong>partagez-la sur WhatsApp</strong> ou imprimez-la. Cochez les articles au fur et à mesure de vos courses !',
+    target:'.liste-actions',
+    arrow:'arrow-top',
+    page:'liste'
+  },
+  {
+    label:'Fiche de conservation',
+    title:'Conservez vos plats sereinement',
+    desc:'En bas de votre liste, téléchargez la <strong>fiche de conservation</strong> — elle vous indique pour chaque plat le jour idéal de consommation, comment le réchauffer et s\'il peut être congelé.',
+    target:'#conservation-cta',
+    arrow:'arrow-top',
+    page:'liste'
+  },
+  {
+    label:'Planning',
+    title:'Réservez votre session',
+    desc:'Choisissez un <strong>créneau disponible</strong> pour votre prochaine session batch cooking avec Imene. Simple et rapide.',
+    target:'#mobt-planning',
+    targetDesktop:'#navb-planning',
+    arrow:'arrow-bottom',
+    page:'planning'
+  },
+  {
+    label:'Messages',
+    title:'Contactez Imene directement',
+    desc:'Posez toutes vos questions, <strong>envoyez des messages</strong> ou même des <strong>notes vocales</strong> directement à Imene depuis l\'appli.',
+    target:'#mobt-messages',
+    targetDesktop:'#navb-messages',
+    arrow:'arrow-bottom',
+    page:'messages'
+  },
+  {
+    label:'Profil alimentaire',
+    title:'Personnalisez votre expérience',
+    desc:'Dans votre Profil → onglet <strong>Alimentation</strong>, renseignez vos allergies, régimes et préférences. Imene adaptera chaque menu rien que pour vous.',
+    target:'#mobt-profil',
+    targetDesktop:'#navb-profil',
+    arrow:'arrow-bottom',
+    page:'profil'
+  },
+  {
+    label:'Parrainage',
+    title:'Parrainez & gagnez des réductions',
+    desc:'Dans votre Profil → onglet <strong>Parrainage</strong>, retrouvez votre code personnel. <strong>1 parrainage = -15%</strong>, 2 = -25%, 3 = une semaine offerte !',
+    target:'#mobt-profil',
+    targetDesktop:'#navb-profil',
+    arrow:'arrow-bottom',
+    page:'profil'
+  },
+  {
+    label:'WhatsApp',
+    title:'Joignez Imene en un tap',
+    desc:'La bulle verte en bas à droite vous permet de <strong>contacter Imene directement sur WhatsApp</strong> à tout moment, pour toute question urgente.',
+    target:'#wa-float',
+    arrow:'arrow-right',
+    page:'menu'
+  }
+];
+
+let tourStep = 0;
+let tourActive = false;
+
+function isMobile(){ return window.innerWidth <= 768; }
+
+function startTour(){
+  tourActive = true;
+  tourStep = 0;
+  document.getElementById('tour-backdrop').style.display = 'block';
+  showPage('menu');
+  setTimeout(()=>tourShow(), 400);
+}
+
+function tourShow(){
+  const step = TOUR_STEPS[tourStep];
+  const total = TOUR_STEPS.length;
+
+  // Naviguer vers la bonne page si nécessaire
+  if(step.page) showPage(step.page);
+
+  // Mettre à jour le contenu
+  document.getElementById('tour-label').textContent = step.label;
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-desc').innerHTML = step.desc;
+  document.getElementById('tour-progress').textContent = (tourStep+1)+'/'+total;
+  document.getElementById('tour-btn-next').textContent = tourStep === total-1 ? 'Terminer ✓' : 'Suivant →';
+
+  // Dots
+  let dots = '';
+  for(let i=0;i<total;i++){
+    if(i===tourStep) dots+='<div class="tour-dot active"></div>';
+    else if(i<tourStep) dots+='<div class="tour-dot done"></div>';
+    else dots+='<div class="tour-dot"></div>';
+  }
+  document.getElementById('tour-dots').innerHTML = dots;
+
+  // Trouver l'élément cible
+  const targetSel = (isMobile() ? step.target : (step.targetDesktop||step.target));
+  const targetEl = targetSel ? document.querySelector(targetSel) : null;
+
+  const bubble = document.getElementById('tour-bubble');
+  const spotlight = document.getElementById('tour-spotlight');
+
+  if(targetEl){
+    const rect = targetEl.getBoundingClientRect();
+    const pad = 6;
+    spotlight.style.display = 'block';
+    spotlight.style.left   = (rect.left - pad)+'px';
+    spotlight.style.top    = (rect.top - pad)+'px';
+    spotlight.style.width  = (rect.width + pad*2)+'px';
+    spotlight.style.height = (rect.height + pad*2)+'px';
+
+    bubble.style.transform = '';
+    const mobile = window.innerWidth <= 768;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const bw = Math.min(300, vw - 24);
+    const bh = 200; // hauteur estimée
+    let bLeft, bTop, arrowClass;
+
+    if(mobile){
+      // Sur mobile : bulle toujours fixée au centre horizontalement
+      // Si l'élément est dans la moitié haute → bulle en bas
+      // Si l'élément est dans la moitié basse → bulle en haut (mais jamais sous la nav)
+      bLeft = (vw - bw) / 2;
+      const navH = 56 + 20; // hauteur nav basse + marge
+
+      if(rect.top < vh / 2){
+        // Élément en haut → bulle en bas mais au-dessus de la nav
+        bTop = Math.min(rect.bottom + 14, vh - navH - bh - 12);
+        if(bTop < rect.bottom + 8) bTop = vh - navH - bh - 12;
+        arrowClass = 'arrow-top';
+      } else {
+        // Élément en bas → bulle au milieu de l'écran
+        bTop = Math.max(60, rect.top - bh - 20);
+        arrowClass = 'arrow-bottom';
+      }
+      // Sécurité : jamais sous la nav basse
+      const maxTop = vh - navH - bh - 8;
+      if(bTop > maxTop) bTop = maxTop;
+      bTop = Math.max(60, bTop);
+    } else {
+      // Desktop : logique classique
+      arrowClass = step.arrow || 'arrow-top';
+      if(arrowClass === 'arrow-top' || arrowClass === 'arrow-top-right'){
+        bTop = rect.bottom + pad + 14;
+        bLeft = arrowClass==='arrow-top-right' ? rect.right - bw : Math.max(12, rect.left - 8);
+      } else if(arrowClass === 'arrow-bottom' || arrowClass === 'arrow-bottom-right'){
+        bTop = rect.top - bh - 14;
+        bLeft = arrowClass==='arrow-bottom-right' ? rect.right - bw : Math.max(12, rect.left - 8);
+      } else if(arrowClass === 'arrow-left'){
+        bTop = Math.max(12, rect.top - 10);
+        bLeft = rect.right + 14;
+      } else if(arrowClass === 'arrow-right'){
+        bTop = Math.max(12, rect.top - 10);
+        bLeft = rect.left - bw - 14;
+      } else {
+        bTop = rect.bottom + 14;
+        bLeft = Math.max(12, rect.left - 8);
+      }
+      bLeft = Math.max(12, Math.min(bLeft, vw - bw - 12));
+      bTop  = Math.max(12, Math.min(bTop, vh - bh - 12));
+    }
+
+    bubble.className = 'tour-bubble ' + arrowClass;
+    bubble.style.left  = bLeft+'px';
+    bubble.style.top   = bTop+'px';
+    bubble.style.width = bw+'px';
+  } else {
+    // Centré (étape intro)
+    spotlight.style.display = 'none';
+    bubble.className = 'tour-bubble';
+    bubble.style.left = '50%';
+    bubble.style.top  = '50%';
+    bubble.style.width = '';
+    bubble.style.transform = 'translate(-50%,-50%)';
+  }
+
+  // Animation re-trigger
+  bubble.style.display = 'none';
+  requestAnimationFrame(()=>{
+    bubble.style.display = 'block';
+    bubble.style.animation = 'none';
+    requestAnimationFrame(()=>{ bubble.style.animation = ''; });
+  });
+}
+
+function tourNext(){
+  if(tourStep >= TOUR_STEPS.length - 1){
+    tourEnd();
+    return;
+  }
+  tourStep++;
+  // Reset transform centré si besoin
+  document.getElementById('tour-bubble').style.transform = '';
+  setTimeout(()=>tourShow(), 200);
+}
+
+function tourSkip(){
+  tourEnd();
+}
+
+function tourEnd(){
+  tourActive = false;
+  document.getElementById('tour-backdrop').style.display = 'none';
+  document.getElementById('tour-spotlight').style.display = 'none';
+  document.getElementById('tour-bubble').style.display = 'none';
+  // Marquer le tour comme vu
+  if(currentUser) setLocal('tour_done_'+currentUser.id, true);
+  showPage('menu');
+  showToast('Vous êtes prêt(e) ! Bonne découverte ✨', 'success');
+}
+
+function replayTour(){
+  if(currentUser) setLocal('tour_done_'+currentUser.id, false);
+  showPage('profil');
+  setTimeout(()=>startTour(), 300);
+}
+
+function checkAndStartTour(){
+  if(!currentUser || currentUser.role !== 'client') return;
+  const done = getLocal('tour_done_'+currentUser.id);
+  if(!done){
+    setTimeout(()=>startTour(), 800);
+  }
+}
+
 function showWelcomeBanner(){
   if(!currentUser||currentUser.role==='admin') return;
   const h=new Date().getHours();
+  const now=new Date();
+  const moisNoms=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const mois=moisNoms[now.getMonth()];
   const prenom=currentUser.name.split(' ')[0];
   const sel=getSelections();
   const hasPubCats=STATE.categories.some(c=>c.published);
@@ -4697,13 +5191,13 @@ function showWelcomeBanner(){
   if(h<12){time='Bonjour';} else if(h<18){time='Bon après-midi';} else {time='Bonsoir';}
   if(sel.length>0){
     msg=`${time} ${prenom} — votre sélection est en cours ✨`;
-    sub=`${sel.length} plat${sel.length>1?'s':''} choisi${sel.length>1?'s':''} · Votre liste est prête`;
+    sub=`${sel.length} plat${sel.length>1?'s':''} choisi${sel.length>1?'s':''} · Votre liste de courses est prête`;
   } else if(hasPubCats){
-    msg=`${time} ${prenom} — votre menu de la semaine est prêt ✨`;
-    sub='Parcourez la sélection et choisissez vos plats';
+    msg=`${time} ${prenom} — découvrez la carte de ${mois} ✨`;
+    sub=`Parcourez les plats du mois et sélectionnez ce qui vous fait envie`;
   } else {
     msg=`${time} ${prenom} — bienvenue dans votre espace Cook'sUP ✨`;
-    sub='Imene prépare bientôt votre menu de la semaine';
+    sub=`La carte de ${mois} arrive très bientôt — restez connecté(e)`;
   }
   document.getElementById('wb-time').textContent=time;
   document.getElementById('wb-msg').textContent=msg;
@@ -4957,94 +5451,56 @@ const EJS_CLIENT   = 'template_fpcohck';
 const ADMIN_EMAIL  = 'cooks.up.paris@gmail.com';
 const APP_URL      = window.location.origin + window.location.pathname;
 
-async function sendEmail(templateId, params){
+async function sendEmail(templateId, toEmail, subject, message){
   try{
-    await emailjs.send(EJS_SERVICE, templateId, params);
-    console.info('[EmailJS] Email envoyé ✓', templateId);
+    await emailjs.send(EJS_SERVICE, templateId, {
+      to_email:     toEmail,
+      client_email: toEmail,
+      subject:      subject,
+      message:      message
+    });
+    console.info('[EmailJS] ✓ Email envoyé à', toEmail);
   } catch(e){
-    console.warn('[EmailJS] Erreur envoi email:', e);
+    console.warn('[EmailJS] Erreur:', e?.text||e);
   }
 }
 
-// Email à Imene : nouvelle demande d'inscription
 function emailAdminNewClient(user){
-  sendEmail(EJS_ADMIN, {
-    subject: `Nouvelle demande d'inscription — ${user.name}`,
-    message: `Bonjour Imene,
-
-${user.name} vient de demander à rejoindre Cook'sUP Planner.
-Email : ${user.email}
-Date : ${new Date().toLocaleDateString('fr-FR')}
-
-Connectez-vous pour valider son compte.`,
-    client_email: ADMIN_EMAIL
-  });
+  sendEmail(EJS_ADMIN, ADMIN_EMAIL,
+    `Nouvelle demande d\'inscription — ${user.name}`,
+    `Bonjour Imene,\n\n${user.name} vient de demander à rejoindre Cook\'sUP Planner.\nEmail : ${user.email}\nDate : ${new Date().toLocaleDateString('fr-FR')}\n\nConnectez-vous pour valider son compte.`
+  );
 }
 
-// Email au client : demande bien reçue
 function emailClientWelcome(user){
-  sendEmail(EJS_CLIENT, {
-    subject: "Votre demande Cook'sUP est bien reçue ✨",
-    message: `Bonjour ${user.name},
-
-Votre demande a bien été reçue !
-Imene va valider votre compte très prochainement.
-Vous recevrez un email de confirmation dès que ce sera fait.
-
-À très bientôt,
-Imene — Cook'sUP`,
-    client_email: user.email
-  });
+  sendEmail(EJS_CLIENT, user.email,
+    "Votre demande Cook\'sUP est bien reçue ✨",
+    `Bonjour ${user.name},\n\nVotre demande a bien été reçue !\nImene va valider votre compte très prochainement.\nVous recevrez un email de confirmation dès que ce sera fait.\n\nÀ très bientôt,\nImene — Cook\'sUP`
+  );
 }
 
-// Email au client : compte activé
 function emailClientApproved(user){
-  sendEmail(EJS_CLIENT, {
-    subject: "Votre compte Cook'sUP est activé 🎉",
-    message: `Bonjour ${user.name},
-
-Bonne nouvelle — votre compte est maintenant actif !
-Connectez-vous ici : ${APP_URL}
-
-Votre menu de la semaine vous attend ✨
-
-À très bientôt,
-Imene — Cook'sUP`,
-    client_email: user.email
-  });
+  sendEmail(EJS_CLIENT, user.email,
+    "Votre compte Cook\'sUP est activé 🎉",
+    `Bonjour ${user.name},\n\nBonne nouvelle — votre compte est maintenant actif !\nConnectez-vous ici : ${APP_URL}\n\nVotre menu de la semaine vous attend ✨\n\nÀ très bientôt,\nImene — Cook\'sUP`
+  );
 }
 
-// Email à Imene : un client a validé sa sélection
 function emailAdminSelection(user, dishCount, persons){
-  sendEmail(EJS_ADMIN, {
-    subject: `Nouvelle sélection — ${user.name}`,
-    message: `Bonjour Imene,
-
-${user.name} vient de valider sa sélection :
-${dishCount} plat${dishCount>1?'s':''} pour ${persons} personne${persons>1?'s':''}.
-
-Connectez-vous pour voir les détails.`,
-    client_email: ADMIN_EMAIL
-  });
+  sendEmail(EJS_ADMIN, ADMIN_EMAIL,
+    `Nouvelle sélection — ${user.name}`,
+    `Bonjour Imene,\n\n${user.name} vient de valider sa sélection :\n${dishCount} plat${dishCount>1?'s':''} pour ${persons} personne${persons>1?'s':''}.\n\nConnectez-vous pour voir les détails.`
+  );
 }
 
-// Email à tous les clients actifs : nouveau menu publié
 async function emailAllClientsNewMenu(){
-  const clients = STATE.users.filter(u => u.role === 'client' && u.status === 'active' && u.email);
+  const clients=STATE.users.filter(u=>u.role==='client'&&u.status==='active'&&u.email);
   for(const u of clients){
-    await sendEmail(EJS_CLIENT, {
-      subject: "Votre menu de la semaine est prêt ✨",
-      message: `Bonjour ${u.name},
-
-Imene vient de publier votre menu de la semaine !
-Connectez-vous pour faire votre sélection : ${APP_URL}
-
-À très bientôt,
-Imene — Cook'sUP`,
-      client_email: u.email
-    });
-    // Petite pause pour éviter le spam filter
-    await new Promise(r => setTimeout(r, 300));
+    await sendEmail(EJS_CLIENT, u.email,
+      "Votre menu de la semaine est prêt ✨",
+      `Bonjour ${u.name},\n\nImene vient de publier votre menu de la semaine !\nConnectez-vous pour faire votre sélection : ${APP_URL}\n\nÀ très bientôt,\nImene — Cook\'sUP`
+    );
+    await new Promise(r=>setTimeout(r,300));
   }
   console.info(`[EmailJS] Menu envoyé à ${clients.length} client(s)`);
 }
