@@ -1636,14 +1636,13 @@ body::before{
 }
 .tour-backdrop{
   position:fixed;inset:0;z-index:999;
-  background:rgba(26,26,22,.38);
-  backdrop-filter:blur(2px);
+  background:rgba(26,26,22,.45);
   pointer-events:all;
 }
 .tour-spotlight{
   position:fixed;z-index:1001;
   border-radius:8px;
-  box-shadow:0 0 0 4000px rgba(26,26,22,.38);
+  box-shadow:0 0 0 4000px rgba(26,26,22,.45);
   pointer-events:none;
   transition:all .4s cubic-bezier(.4,0,.2,1);
 }
@@ -1971,8 +1970,8 @@ body::before{
 
   /* ─── WhatsApp bubble — au dessus de la nav basse ─── */
   #wa-float{
-    bottom:220px;
-    right:16px;width:46px;height:46px;
+    bottom:calc(56px + env(safe-area-inset-bottom) + 80px);
+    right:16px;width:44px;height:44px;
   }
   #wa-float svg{width:22px;height:22px;}
 
@@ -2329,8 +2328,19 @@ body::before{
 
     <!-- PAGE PROFIL -->
     <div id="page-profil" class="page">
-      <div class="section-tag"><div class="section-line"></div><span class="section-label">Mon espace</span></div>
-      <h2 class="page-title">Mon <em>profil</em></h2>
+      <!-- Avatar hero en haut -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;padding:20px 22px;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));border-radius:var(--radius-md);position:relative;overflow:hidden;">
+        <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06);"></div>
+        <div id="profil-avatar-hero" style="width:56px;height:56px;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:white;flex-shrink:0;">?</div>
+        <div style="flex:1;min-width:0;">
+          <div id="profil-hero-name" style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;color:white;margin-bottom:2px;">—</div>
+          <div id="profil-hero-email" style="font-size:.75rem;color:rgba(255,255,255,.6);font-weight:300;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px;">Mon espace</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.7);font-weight:300;" id="profil-hero-persons"></div>
+        </div>
+      </div>
 
       <!-- Onglets profil -->
       <div class="profil-tabs">
@@ -3797,7 +3807,18 @@ let profP=2;
 
 function renderProfil(){
   if(!currentUser)return;
-  document.getElementById('profil-avatar-big').textContent=currentUser.name.charAt(0).toUpperCase();
+  // Hero en haut
+  const initial=currentUser.name.charAt(0).toUpperCase();
+  const heroAvatar=document.getElementById('profil-avatar-hero');
+  if(heroAvatar) heroAvatar.textContent=initial;
+  const heroName=document.getElementById('profil-hero-name');
+  if(heroName) heroName.textContent=currentUser.name;
+  const heroEmail=document.getElementById('profil-hero-email');
+  if(heroEmail) heroEmail.textContent=currentUser.email;
+  const heroPersons=document.getElementById('profil-hero-persons');
+  if(heroPersons) heroPersons.textContent=(currentUser.defaultPersons||2)+' personne'+(( currentUser.defaultPersons||2)>1?'s':'');
+  // Onglet infos
+  document.getElementById('profil-avatar-big').textContent=initial;
   document.getElementById('profil-name-disp').textContent=currentUser.name;
   document.getElementById('profil-email-disp').textContent=currentUser.email;
   document.getElementById('profil-name').value=currentUser.name;
@@ -5072,26 +5093,30 @@ function tourShow(){
     let bLeft, bTop, arrowClass;
 
     if(mobile){
-      // Sur mobile : bulle toujours fixée au centre horizontalement
-      // Si l'élément est dans la moitié haute → bulle en bas
-      // Si l'élément est dans la moitié basse → bulle en haut (mais jamais sous la nav)
-      bLeft = (vw - bw) / 2;
-      const navH = 56 + 20; // hauteur nav basse + marge
-
-      if(rect.top < vh / 2){
-        // Élément en haut → bulle en bas mais au-dessus de la nav
-        bTop = Math.min(rect.bottom + 14, vh - navH - bh - 12);
-        if(bTop < rect.bottom + 8) bTop = vh - navH - bh - 12;
-        arrowClass = 'arrow-top';
-      } else {
-        // Élément en bas → bulle au milieu de l'écran
-        bTop = Math.max(60, rect.top - bh - 20);
-        arrowClass = 'arrow-bottom';
-      }
-      // Sécurité : jamais sous la nav basse
-      const maxTop = vh - navH - bh - 8;
-      if(bTop > maxTop) bTop = maxTop;
-      bTop = Math.max(60, bTop);
+      // Sur mobile : bulle TOUJOURS fixée en position centrale basse
+      // juste au-dessus de la nav — jamais coupée, toujours lisible
+      bLeft = 12;
+      bw = vw - 24;
+      const navH = 56 + env_safe_bottom + 12;
+      // Position fixe en bas de l'écran (pas relative à l'élément)
+      // On utilise bottom plutôt que top pour éviter les décalages
+      bubble.style.position = 'fixed';
+      bubble.style.left = '12px';
+      bubble.style.right = '12px';
+      bubble.style.width = 'auto';
+      bubble.style.bottom = (56 + 20) + 'px';
+      bubble.style.top = 'auto';
+      bubble.style.transform = '';
+      arrowClass = ''; // pas de flèche sur mobile
+      // Override : on applique directement et on sort
+      bubble.className = 'tour-bubble';
+      bubble.style.display = 'none';
+      requestAnimationFrame(()=>{
+        bubble.style.display = 'block';
+        bubble.style.animation = 'none';
+        requestAnimationFrame(()=>{ bubble.style.animation = ''; });
+      });
+      return; // Sortir de la fonction, positionnement déjà fait
     } else {
       // Desktop : logique classique
       arrowClass = step.arrow || 'arrow-top';
