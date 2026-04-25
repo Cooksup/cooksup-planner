@@ -1656,6 +1656,21 @@ body::before{
   animation:bubbleIn .3s cubic-bezier(.4,0,.2,1) both;
   pointer-events:all;
 }
+/* Mobile : bulle toujours en bas, pleine largeur, jamais coupée */
+@media(max-width:768px){
+  .tour-bubble{
+    position:fixed!important;
+    left:12px!important;
+    right:12px!important;
+    bottom:88px!important;
+    top:auto!important;
+    width:auto!important;
+    max-width:none!important;
+    transform:none!important;
+    border-radius:var(--radius-md)!important;
+  }
+  .tour-bubble::before{display:none!important;}
+}
 @keyframes bubbleIn{
   from{opacity:0;transform:scale(.92) translateY(8px);}
   to{opacity:1;transform:scale(1) translateY(0);}
@@ -1970,13 +1985,13 @@ body::before{
 
   /* ─── WhatsApp bubble — au dessus de la nav basse ─── */
   #wa-float{
-    bottom:calc(56px + env(safe-area-inset-bottom) + 80px);
+    bottom:145px;
     right:16px;width:44px;height:44px;
   }
   #wa-float svg{width:22px;height:22px;}
 
   /* ─── Toast ─── */
-  .toast{bottom:calc(56px + env(safe-area-inset-bottom) + 12px);right:14px;}
+  .toast{bottom:145px;right:14px;}
 
   /* ─── Loading ─── */
   .loading-logo{font-size:2rem;}
