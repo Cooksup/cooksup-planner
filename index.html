@@ -1662,14 +1662,19 @@ body::before{
     position:fixed!important;
     left:12px!important;
     right:12px!important;
-    bottom:88px!important;
+    bottom:76px!important;
     top:auto!important;
     width:auto!important;
     max-width:none!important;
+    max-height:calc(100vh - 140px)!important;
+    overflow-y:auto!important;
     transform:none!important;
     border-radius:var(--radius-md)!important;
+    padding:16px 18px 14px!important;
   }
   .tour-bubble::before{display:none!important;}
+  .tour-title{font-size:1rem!important;}
+  .tour-desc{font-size:.76rem!important;margin-bottom:12px!important;}
 }
 @keyframes bubbleIn{
   from{opacity:0;transform:scale(.92) translateY(8px);}
@@ -1691,13 +1696,14 @@ body::before{
   color:var(--terracotta);font-weight:600;margin-bottom:6px;
 }
 .tour-step-dots{
-  display:flex;gap:4px;margin-bottom:12px;
+  display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;
+  justify-content:center;width:100%;
 }
 .tour-dot{
   width:5px;height:5px;border-radius:50%;
-  background:var(--green-pale);transition:all .2s;
+  background:var(--green-pale);transition:all .2s;flex-shrink:0;
 }
-.tour-dot.active{background:var(--green-deep);width:16px;border-radius:3px;}
+.tour-dot.active{background:var(--green-deep);width:14px;border-radius:3px;}
 .tour-dot.done{background:var(--green-soft);}
 .tour-title{
   font-family:'Cormorant Garamond',serif;
@@ -1983,13 +1989,6 @@ body::before{
   .ing-add-row{grid-template-columns:1fr 1fr;}
   .ing-add-row input:last-child{grid-column:1/-1;}
 
-  /* ─── WhatsApp bubble — au dessus de la nav basse ─── */
-  #wa-float{
-    bottom:145px;
-    right:16px;width:44px;height:44px;
-  }
-  #wa-float svg{width:22px;height:22px;}
-
   /* ─── Toast ─── */
   .toast{bottom:145px;right:14px;}
 
@@ -2105,6 +2104,72 @@ body::before{
   /* ─── Auth mobile ─── */
   .auth-title{font-size:1.55rem;}
   .auth-sub{font-size:.8rem;margin-bottom:28px;}
+}
+
+/* ═══ MENU TABS ═══ */
+.menu-tabs-wrap{position:sticky;top:64px;z-index:100;background:rgba(250,247,240,.96);backdrop-filter:blur(16px);border-bottom:1px solid rgba(45,74,50,.08);margin:0 -36px 32px;padding:0 36px;}
+.menu-tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.menu-tabs::-webkit-scrollbar{display:none;}
+.menu-tab{display:flex;align-items:center;gap:7px;padding:14px 18px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);border:none;background:transparent;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;flex-shrink:0;}
+.menu-tab:hover{color:var(--green-deep);}
+.menu-tab.active{color:var(--green-deep);border-bottom-color:var(--terracotta);}
+.menu-tab-emoji{font-size:1rem;line-height:1;}
+.menu-tab-count{background:var(--cream-warm);color:var(--muted);font-size:.6rem;padding:2px 6px;border-radius:10px;font-weight:500;}
+.menu-tab.active .menu-tab-count{background:var(--green-pale);color:var(--green-deep);}
+.menu-panel{display:none;}
+.menu-panel.active{display:block;}
+/* ═══ BOUTON SAISON ═══ */
+.season-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:linear-gradient(135deg,var(--green-deep),var(--green-mid));color:white;border:none;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:1px;cursor:pointer;box-shadow:0 4px 14px rgba(45,74,50,.22);transition:all .25s;margin-bottom:24px;}
+.season-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,74,50,.3);}
+/* ═══ MODAL SAISON ═══ */
+.season-modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(26,26,22,.55);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;}
+.season-modal-overlay.open{display:flex;}
+.season-modal{background:var(--cream);border-radius:var(--radius-lg);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:fadeUp .3s ease both;}
+.season-modal-head{padding:28px 28px 16px;border-bottom:1px solid rgba(45,74,50,.06);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;position:sticky;top:0;background:var(--cream);z-index:2;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+.season-modal-title{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;color:var(--dark);line-height:1.1;}
+.season-modal-title em{font-style:italic;color:var(--green-mid);}
+.season-modal-sub{font-size:.78rem;color:var(--muted);font-weight:300;margin-top:4px;}
+.season-modal-close{width:32px;height:32px;flex-shrink:0;background:var(--cream-warm);border:none;border-radius:50%;cursor:pointer;font-size:.85rem;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:var(--transition);}
+.season-modal-close:hover{background:var(--cream-deep);color:var(--dark);}
+.season-modal-body{padding:20px 28px 28px;}
+.season-section-title{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:var(--terracotta);font-weight:500;margin:20px 0 12px;display:flex;align-items:center;gap:8px;}
+.season-section-title::after{content:'';flex:1;height:1px;background:rgba(184,115,85,.15);}
+.season-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.season-tag{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:20px;font-size:.78rem;font-weight:400;}
+.season-tag.legume{background:var(--green-mist);color:var(--green-deep);border:1px solid var(--green-pale);}
+.season-tag.fruit{background:#FEF0E7;color:#9B4B1E;border:1px solid #F5D5BF;}
+.season-tag.herbe{background:#F0F7F0;color:var(--green-mid);border:1px solid var(--green-pale);}
+.season-tag .star-badge{font-size:.55rem;background:var(--gold);color:var(--dark);padding:1px 5px;border-radius:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;}
+.season-tip{background:linear-gradient(135deg,var(--green-mist),var(--cream-warm));border-left:3px solid var(--green-soft);border-radius:0 var(--radius-md) var(--radius-md) 0;padding:14px 16px;margin-top:20px;font-size:.82rem;color:var(--text);line-height:1.65;font-weight:300;}
+.season-tip strong{color:var(--green-deep);font-weight:500;}
+/* ═══ PANEL ACTION SÉLECTION ═══ */
+.dish-action-panel{position:fixed;bottom:0;left:0;right:0;z-index:200;background:white;border-top:1px solid rgba(45,74,50,.1);border-radius:20px 20px 0 0;padding:16px 20px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -8px 32px rgba(26,26,22,.12);transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);}
+.dish-action-panel.visible{transform:translateY(0);}
+.dap-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.dap-title{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--dark);}
+.dap-sub{font-size:.72rem;color:var(--muted);font-weight:300;}
+.dap-count{background:var(--green-mist);color:var(--green-deep);font-size:.68rem;font-weight:600;padding:4px 10px;border-radius:12px;border:1px solid var(--green-pale);}
+.dap-actions{display:flex;gap:8px;}
+.dap-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px;border-radius:14px;border:1.5px solid rgba(45,74,50,.12);background:var(--cream);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.dap-btn:hover{border-color:var(--green-mid);background:var(--green-mist);}
+.dap-btn-icon{font-size:1.4rem;line-height:1;}
+.dap-btn-label{font-size:.65rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:var(--text);text-align:center;line-height:1.2;}
+.dap-btn.primary{background:var(--green-deep);border-color:var(--green-deep);}
+.dap-btn.primary .dap-btn-label{color:white;}
+/* ═══ SÉLECTEUR DE MOIS ═══ */
+.month-selector-wrap{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.month-selector-label{font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:500;white-space:nowrap;}
+.month-selector{flex:1;appearance:none;-webkit-appearance:none;background:white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232D4A32' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;border:1.5px solid rgba(45,74,50,.15);border-radius:var(--radius-sm);padding:9px 36px 9px 14px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--dark);font-weight:500;cursor:pointer;}
+.month-selector:focus{outline:none;border-color:var(--green-mid);}
+@media(max-width:768px){
+  .menu-tabs-wrap{margin:0 -14px 20px;padding:0 8px;top:52px;}
+  .menu-tab{padding:11px 12px;font-size:.65rem;gap:5px;}
+  .menu-tab-count{display:none;}
+  .season-modal{max-width:100%;margin:0;}
+  .season-modal-head{padding:20px 16px 12px;}
+  .season-modal-body{padding:12px 16px 20px;}
+  .season-modal-title{font-size:1.5rem;}
+  .dish-action-panel{padding-bottom:calc(76px + env(safe-area-inset-bottom));}
 }
 </style>
 </head>
@@ -2249,6 +2314,16 @@ body::before{
         <div><strong>Nouveautés disponibles !</strong> Imene a mis à jour le catalogue. Découvrez les nouvelles sélections !</div>
         <button class="notif-close" onclick="dismissMenuNotif()">✕</button>
       </div>
+      <div class="month-selector-wrap">
+        <span class="month-selector-label">📅 Carte du mois</span>
+        <select class="month-selector" id="month-selector" onchange="switchMonth(this.value)">
+          <option value="current">⭐ Carte de Mai 2026</option>
+        </select>
+      </div>
+      <button class="season-btn" onclick="openSeasonModal()">
+        <span style="font-size:1rem;">🌿</span>
+        Fruits &amp; légumes de mai
+      </button>
       <div class="persons-bar">
         <span class="persons-label">Nombre de personnes</span>
         <div class="persons-ctrl">
@@ -2552,6 +2627,14 @@ body::before{
 
       <!-- TAB: CATALOGUE -->
       <div class="tab-content active" id="tab-catalogue">
+        <div style="background:var(--cream-warm);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid rgba(45,74,50,.08);">
+          <div style="flex:1;min-width:180px;">
+            <div style="font-size:.78rem;font-weight:500;color:var(--dark);margin-bottom:2px;">📦 Archiver la carte du mois</div>
+            <div style="font-size:.72rem;color:var(--muted);font-weight:300;">Les clients peuvent consulter les cartes passées</div>
+          </div>
+          <input type="text" id="archive-month-input" placeholder="Ex: Avril 2026" style="padding:8px 12px;border:1.5px solid rgba(45,74,50,.15);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.8rem;width:150px;">
+          <button onclick="archiveCurrentMonth(document.getElementById('archive-month-input').value.trim())" class="btn" style="padding:8px 16px;font-size:.72rem;white-space:nowrap;">Archiver →</button>
+        </div>
         <div class="admin-grid">
           <!-- Ajouter plat -->
           <div class="admin-card">
@@ -2795,21 +2878,8 @@ body::before{
   </div>
 
   <!-- BULLE WHATSAPP FLOTTANTE (clients uniquement) -->
-  <a id="wa-float" href="https://wa.me/33768126379?text=Bonjour%20Imene%2C%20j%27ai%20une%20question%20concernant%20Cook%27sUP." target="_blank"
-    style="display:none;position:fixed;bottom:28px;right:28px;z-index:300;
-    width:54px;height:54px;background:var(--wa);border-radius:50%;
-    align-items:center;justify-content:center;
-    box-shadow:0 4px 20px rgba(37,211,102,.4);
-    transition:transform .2s,box-shadow .2s;text-decoration:none;"
-    onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 28px rgba(37,211,102,.55)'"
-    onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(37,211,102,.4)'"
-    title="Contacter Imene sur WhatsApp">
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  </a>
 
-</div><!-- view-app -->
+</div><!-- view-app -->>
 
 <!-- MODALS -->
 <div id="modal-add-cat" class="modal-overlay hidden">
@@ -3323,11 +3393,9 @@ function loginUser(user){
     const mn=document.getElementById('mob-nav');
     if(mn)mn.style.display='none';
   }
-  updateWaFloat();
 }
 
 function doLogout(){
-  updateWaFloat();
   const mn=document.getElementById('mob-nav');
   if(mn)mn.style.display='none';
   currentUser=null; setLocal('session',null);
@@ -3478,20 +3546,36 @@ function updateSelectedUI(sel){
   const cta=document.getElementById('list-cta');
   if(n>0){cta.style.display='flex';document.getElementById('list-cta-title').textContent=`Votre liste est prête (${n} plat${n>1?'s':''}) !`;document.getElementById('list-cta-sub').textContent=`Ingrédients calculés pour ${persons} personne${persons>1?'s':''}`;}
   else cta.style.display='none';
+  updateDapPanel(sel);
 }
 
 // ══════════════════════════════════════════════
 //  MENU RENDER (client)
 // ══════════════════════════════════════════════
+function switchMenuTab(catId){
+  document.querySelectorAll('.menu-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.menu-panel').forEach(p=>p.classList.remove('active'));
+  const tab=document.querySelector(`.menu-tab[data-cat="${catId}"]`);
+  const panel=document.getElementById('panel-'+catId);
+  if(tab)tab.classList.add('active');
+  if(panel)panel.classList.add('active');
+}
+
 function renderMenu(){
   const sel=getSelections();
   const area=document.getElementById('menu-categories-area');
   const pubCats=STATE.categories.filter(c=>c.published);
   if(!pubCats.length){area.innerHTML='<div class="no-content"><h3>Aucun menu disponible</h3><p>Revenez bientôt !</p></div>';return;}
-  let html='';
-  pubCats.forEach(cat=>{
+  let tabsHtml=`<div class="menu-tabs-wrap"><div class="menu-tabs">`;
+  pubCats.forEach((cat,i)=>{
+    const n=cat.dishIds.map(id=>STATE.dishes.find(d=>d.id===id)).filter(Boolean).length;
+    tabsHtml+=`<button class="menu-tab${i===0?' active':''}" data-cat="${cat.id}" onclick="switchMenuTab('${cat.id}')"><span class="menu-tab-emoji">${cat.emoji||'🍽'}</span><span>${cat.name}</span><span class="menu-tab-count">${n}</span></button>`;
+  });
+  tabsHtml+=`</div></div>`;
+  let html=tabsHtml;
+  pubCats.forEach((cat,i)=>{
     const catDishes=cat.dishIds.map(id=>STATE.dishes.find(d=>d.id===id)).filter(Boolean);
-    html+=`<div class="cat-section"><div class="cat-header"><span style="font-size:1.4rem;">${cat.emoji||'🍽'}</span><span class="cat-title">${cat.name}</span><span class="cat-count">${catDishes.length} plat${catDishes.length>1?'s':''}</span></div><div class="dishes-grid">`;
+    html+=`<div class="menu-panel${i===0?' active':''}" id="panel-${cat.id}"><div class="dishes-grid">`;
     catDishes.forEach(dish=>{
       const selected=sel.includes(dish.id);
       const imgHtml=dish.imageBase64?`<img src="${dish.imageBase64}" alt="${dish.name}">`:(dish.emoji||'·');
@@ -4633,12 +4717,98 @@ function togglePwd(inputId, btn){
   btn.textContent = visible ? 'Voir' : 'Masquer';
 }
 
-// ── Bulle WhatsApp : visible seulement pour les clients ──
-function updateWaFloat(){
-  const wa = document.getElementById('wa-float');
-  if(!wa) return;
-  const show = currentUser && currentUser.role === 'client';
-  wa.style.display = show ? 'flex' : 'none';
+
+// ══════════════════════════════════════════════
+//  PANEL ACTION SÉLECTION
+// ══════════════════════════════════════════════
+function updateDapPanel(sel){
+  const panel=document.getElementById('dish-action-panel');
+  const countEl=document.getElementById('dap-count');
+  if(!panel)return;
+  const n=sel.length;
+  if(n>0&&currentUser&&currentUser.role==='client'){
+    panel.classList.add('visible');
+    countEl.textContent=n+' plat'+(n>1?'s':'')+' sélectionné'+(n>1?'s':'');
+  } else {
+    panel.classList.remove('visible');
+  }
+}
+
+function dapAction(type){
+  if(window._visitorMode){showVisitorNudge();return;}
+  const sel=getSelections();
+  const dishNames=sel.map(id=>{const d=STATE.dishes.find(x=>x.id===id);return d?'\u2022 '+d.name:'';}).filter(Boolean).join('\n');
+  let msg='';
+  if(type==='changer'){
+    msg='\uD83D\uDD04 Bonjour Imene, je voudrais changer un plat de ma s\u00e9lection :\n\n'+dishNames+'\n\nLe plat que je voudrais remplacer est : ';
+  } else if(type==='personnaliser'){
+    msg='\u270F\uFE0F Bonjour Imene, je voudrais personnaliser un plat :\n\n'+dishNames+'\n\nMa demande : ';
+  } else if(type==='proposer'){
+    msg='\uD83D\uDCA1 Bonjour Imene, j\u2019aimerais vous proposer un plat :\n\nMa s\u00e9lection :\n'+dishNames+'\n\nMon id\u00e9e : ';
+  }
+  showPage('messages');
+  setTimeout(()=>{
+    const input=document.getElementById('client-msg-input');
+    if(input){input.value=msg;input.focus();input.setSelectionRange(msg.length,msg.length);}
+  },300);
+}
+
+// ══════════════════════════════════════════════
+//  SÉLECTEUR DE MOIS
+// ══════════════════════════════════════════════
+async function loadMonthArchives(){
+  try{
+    const archives=await getShared('monthArchives');
+    const select=document.getElementById('month-selector');
+    if(!select||!archives)return;
+    const months=typeof archives==='object'?archives:JSON.parse(archives);
+    Object.keys(months).sort().reverse().forEach(month=>{
+      if([...select.options].some(o=>o.value===month))return;
+      const opt=document.createElement('option');
+      opt.value=month;
+      opt.textContent='\uD83D\uDCE6 '+month;
+      select.appendChild(opt);
+    });
+  }catch(e){}
+}
+
+async function switchMonth(value){
+  if(value==='current'){renderMenu();return;}
+  try{
+    const archives=await getShared('monthArchives');
+    const months=typeof archives==='object'?archives:JSON.parse(archives);
+    if(!months[value])return;
+    const orig={dishes:STATE.dishes,cats:STATE.categories};
+    STATE.dishes=months[value].dishes;
+    STATE.categories=months[value].categories;
+    renderMenu();
+    STATE.dishes=orig.dishes;
+    STATE.categories=orig.cats;
+  }catch(e){showToast('Archive introuvable');}
+}
+
+async function archiveCurrentMonth(monthName){
+  if(!monthName)return;
+  try{
+    let archives={};
+    try{const raw=await getShared('monthArchives');archives=raw?(typeof raw==='object'?raw:JSON.parse(raw)):{};}catch(e){}
+    archives[monthName]={dishes:JSON.parse(JSON.stringify(STATE.dishes)),categories:JSON.parse(JSON.stringify(STATE.categories))};
+    await setShared('monthArchives',archives);
+    showToast('\u2705 Carte "'+monthName+'" archiv\u00e9e !');
+    loadMonthArchives();
+  }catch(e){showToast('Erreur archivage');}
+}
+
+// ══════════════════════════════════════════════
+//  MODAL SAISON
+// ══════════════════════════════════════════════
+function openSeasonModal(){
+  document.getElementById('season-modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeSeasonModal(){
+  document.getElementById('season-modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
 }
 
 // ── Aperçu menu côté admin ──
@@ -5036,14 +5206,6 @@ const TOUR_STEPS = [
     targetDesktop:'#navb-profil',
     arrow:'arrow-bottom',
     page:'profil'
-  },
-  {
-    label:'WhatsApp',
-    title:'Joignez Imene en un tap',
-    desc:'La bulle verte en bas à droite vous permet de <strong>contacter Imene directement sur WhatsApp</strong> à tout moment, pour toute question urgente.',
-    target:'#wa-float',
-    arrow:'arrow-right',
-    page:'menu'
   }
 ];
 
@@ -5325,7 +5487,83 @@ async function downloadConservationPDF(){
       <div class="row"><span class="row-icon">🔥</span><span><strong>Réchauffage :</strong> ${reheat}</span></div>
     </div>`;
   });
-  html+=`<footer>Cook'sUP — cooks.up.paris@gmail.com — Fiche générée le ${dateStr}</footer></body></html>`;
+  html+=`<footer>Cook'sUP — cooks.up.paris@gmail.com — Fiche générée le ${dateStr}</footer>
+<!-- ═══ PANEL ACTION SÉLECTION ═══ -->
+<div class="dish-action-panel" id="dish-action-panel">
+  <div class="dap-top">
+    <div>
+      <div class="dap-title">Personnalisez votre sélection</div>
+      <div class="dap-sub">Imene s'adapte à vos envies 💚</div>
+    </div>
+    <span class="dap-count" id="dap-count">0 plat</span>
+  </div>
+  <div class="dap-actions">
+    <button class="dap-btn" onclick="dapAction('changer')">
+      <span class="dap-btn-icon">🔄</span>
+      <span class="dap-btn-label">Changer<br>un plat</span>
+    </button>
+    <button class="dap-btn" onclick="dapAction('personnaliser')">
+      <span class="dap-btn-icon">✏️</span>
+      <span class="dap-btn-label">Personnaliser<br>un plat</span>
+    </button>
+    <button class="dap-btn primary" onclick="dapAction('proposer')">
+      <span class="dap-btn-icon">💡</span>
+      <span class="dap-btn-label">Proposer<br>un plat</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ MODAL SAISON MAI ═══ -->
+<div class="season-modal-overlay" id="season-modal-overlay" onclick="if(event.target===this)closeSeasonModal()">
+  <div class="season-modal">
+    <div class="season-modal-head">
+      <div>
+        <div class="season-modal-title">Les saveurs <em>de mai</em></div>
+        <div class="season-modal-sub">Fruits, légumes &amp; herbes du mois 🌿</div>
+      </div>
+      <button class="season-modal-close" onclick="closeSeasonModal()">✕</button>
+    </div>
+    <div class="season-modal-body">
+      <div class="season-section-title">🥬 Légumes vedettes</div>
+      <div class="season-grid">
+        <span class="season-tag legume">🫘 Fèves fraîches <span class="star-badge">star</span></span>
+        <span class="season-tag legume">🌿 Asperges vertes <span class="star-badge">star</span></span>
+        <span class="season-tag legume">🟢 Petits pois frais <span class="star-badge">star</span></span>
+        <span class="season-tag legume">🌸 Artichauts poivrade <span class="star-badge">star</span></span>
+        <span class="season-tag legume">🥒 Courgettes nouvelles</span>
+        <span class="season-tag legume">🧅 Oignons nouveaux</span>
+        <span class="season-tag legume">🥕 Carottes nouvelles</span>
+        <span class="season-tag legume">🥔 Pommes de terre nouvelles</span>
+        <span class="season-tag legume">🍅 Premières tomates cerises</span>
+        <span class="season-tag legume">🌿 Fenouil</span>
+        <span class="season-tag legume">🌱 Épinards</span>
+      </div>
+      <div class="season-section-title">🍓 Fruits de saison</div>
+      <div class="season-grid">
+        <span class="season-tag fruit">🍓 Fraises <span class="star-badge">star</span></span>
+        <span class="season-tag fruit">🫐 Premières cerises <span class="star-badge">star</span></span>
+        <span class="season-tag fruit">🍑 Abricots</span>
+        <span class="season-tag fruit">🍋 Citrons</span>
+        <span class="season-tag fruit">🌿 Rhubarbe</span>
+      </div>
+      <div class="season-section-title">🌿 Herbes fraîches</div>
+      <div class="season-grid">
+        <span class="season-tag herbe">🌿 Basilic</span>
+        <span class="season-tag herbe">🌱 Menthe fraîche</span>
+        <span class="season-tag herbe">🌿 Coriandre</span>
+        <span class="season-tag herbe">🌾 Ciboulette</span>
+        <span class="season-tag herbe">🌿 Estragon</span>
+        <span class="season-tag herbe">🌸 Thym frais</span>
+        <span class="season-tag herbe">🌿 Romarin</span>
+        <span class="season-tag herbe">🌾 Persil plat</span>
+      </div>
+      <div class="season-tip">
+        <strong>💡 Conseil du marché :</strong> En mai, privilégiez les marchés le matin tôt pour les fèves et petits pois. Les asperges vertes françaises sont à leur pic — choisissez-les bien droites avec les pointes serrées.
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>`;
   const blob=new Blob([html],{type:'text/html'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -5572,5 +5810,81 @@ function showVisitorNudge(){
   setTimeout(()=>{t.classList.remove('show');t.innerHTML='';},4000);
 }
 </script>
+
+<!-- ═══ PANEL ACTION SÉLECTION ═══ -->
+<div class="dish-action-panel" id="dish-action-panel">
+  <div class="dap-top">
+    <div>
+      <div class="dap-title">Personnalisez votre sélection</div>
+      <div class="dap-sub">Imene s'adapte à vos envies 💚</div>
+    </div>
+    <span class="dap-count" id="dap-count">0 plat</span>
+  </div>
+  <div class="dap-actions">
+    <button class="dap-btn" onclick="dapAction('changer')">
+      <span class="dap-btn-icon">🔄</span>
+      <span class="dap-btn-label">Changer<br>un plat</span>
+    </button>
+    <button class="dap-btn" onclick="dapAction('personnaliser')">
+      <span class="dap-btn-icon">✏️</span>
+      <span class="dap-btn-label">Personnaliser<br>un plat</span>
+    </button>
+    <button class="dap-btn primary" onclick="dapAction('proposer')">
+      <span class="dap-btn-icon">💡</span>
+      <span class="dap-btn-label">Proposer<br>un plat</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ MODAL SAISON MAI ═══ -->
+<div class="season-modal-overlay" id="season-modal-overlay" onclick="if(event.target===this)closeSeasonModal()">
+  <div class="season-modal">
+    <div class="season-modal-head">
+      <div>
+        <div class="season-modal-title">Les saveurs <em>de mai</em></div>
+        <div class="season-modal-sub">Fruits, légumes &amp; herbes du mois 🌿</div>
+      </div>
+      <button class="season-modal-close" onclick="closeSeasonModal()">✕</button>
+    </div>
+    <div class="season-modal-body">
+      <div class="season-section-title">🥬 Légumes vedettes</div>
+      <div class="season-grid">
+        <span class="season-tag legume">🫘 Fèves fraîches <span class="star-badge">star</span></span>
+        <span class="season-tag legume">🌿 Asperges vertes <span class="star-badge">star</span></span>
+        <span class="season-tag legume">🟢 Petits pois frais <span class="star-badge">star</span></span>
+        <span class="season-tag legume">🌸 Artichauts poivrade <span class="star-badge">star</span></span>
+        <span class="season-tag legume">🥒 Courgettes nouvelles</span>
+        <span class="season-tag legume">🧅 Oignons nouveaux</span>
+        <span class="season-tag legume">🥕 Carottes nouvelles</span>
+        <span class="season-tag legume">🥔 Pommes de terre nouvelles</span>
+        <span class="season-tag legume">🍅 Premières tomates cerises</span>
+        <span class="season-tag legume">🌿 Fenouil</span>
+        <span class="season-tag legume">🌱 Épinards</span>
+      </div>
+      <div class="season-section-title">🍓 Fruits de saison</div>
+      <div class="season-grid">
+        <span class="season-tag fruit">🍓 Fraises <span class="star-badge">star</span></span>
+        <span class="season-tag fruit">🫐 Premières cerises <span class="star-badge">star</span></span>
+        <span class="season-tag fruit">🍑 Abricots</span>
+        <span class="season-tag fruit">🍋 Citrons</span>
+        <span class="season-tag fruit">🌿 Rhubarbe</span>
+      </div>
+      <div class="season-section-title">🌿 Herbes fraîches</div>
+      <div class="season-grid">
+        <span class="season-tag herbe">🌿 Basilic</span>
+        <span class="season-tag herbe">🌱 Menthe fraîche</span>
+        <span class="season-tag herbe">🌿 Coriandre</span>
+        <span class="season-tag herbe">🌾 Ciboulette</span>
+        <span class="season-tag herbe">🌿 Estragon</span>
+        <span class="season-tag herbe">🌸 Thym frais</span>
+        <span class="season-tag herbe">🌿 Romarin</span>
+        <span class="season-tag herbe">🌾 Persil plat</span>
+      </div>
+      <div class="season-tip">
+        <strong>💡 Conseil du marché :</strong> En mai, privilégiez les marchés le matin tôt pour les fèves et petits pois. Les asperges vertes françaises sont à leur pic — choisissez-les bien droites avec les pointes serrées.
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
