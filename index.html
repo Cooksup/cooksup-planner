@@ -3620,7 +3620,7 @@ function openSelectionModal(){
     if(!body) return;
 
     if(!selectedDishes.length){
-      body.innerHTML='<p style="color:var(--muted);font-size:.85rem;padding:12px 0;">Aucun plat sélectionné pour l'instant.</p>';
+      body.innerHTML=`<p style="color:var(--muted);font-size:.85rem;padding:12px 0;">Aucun plat sélectionné pour l'instant.</p>`;
     } else {
       // Grouper par catégorie
       const byCat={};
@@ -3655,7 +3655,7 @@ function openSelectionModal(){
     }
   } catch(e){
     console.error('openSelectionModal error:', e);
-    showToast('Erreur lors de l'ouverture', 'error');
+    showToast('Erreur lors de l\'ouverture', 'error');
   }
 }
 
@@ -3697,8 +3697,8 @@ function updateSelectedUI(sel){
   const actionBar=document.getElementById('action-bar');
   if(actionBar) actionBar.style.display=n>0?'flex':'none';
   // Badge compteur sur le bouton Ma sélection
-  const badge=document.getElementById('selection-badge');
-  if(badge) badge.textContent=n;
+  const selBadge=document.getElementById('selection-badge');
+  if(selBadge) selBadge.textContent=n;
 }
 
 // ══════════════════════════════════════════════
