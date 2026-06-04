@@ -3765,15 +3765,6 @@ function populateMonthSelector(){
 }
 
 
-// ══ BIBLIOTHÈQUE IMAGES ══
-const DISH_IMG_BASE={"chicken": "https://images.unsplash.com/photo-1574672280600-4accfa5b6f98?auto=format&fit=crop&w=400&h=280&q=75", "salmon": "https://images.unsplash.com/photo-1712334562767-5d366d0c40d9?auto=format&fit=crop&w=400&h=280&q=75", "salad": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=400&h=280&q=75", "lasagna": "https://images.unsplash.com/photo-1573070640082-32bf80e3efe0?auto=format&fit=crop&w=400&h=280&q=75", "soup": "https://images.unsplash.com/photo-1510431198580-7727c9fa1e3a?auto=format&fit=crop&w=400&h=280&q=75", "meat_veg": "https://images.unsplash.com/photo-1633436375795-12b3b339712f?auto=format&fit=crop&w=400&h=280&q=75", "veggie": "https://images.unsplash.com/photo-1555243896-c709bfa0b564?auto=format&fit=crop&w=400&h=280&q=75", "pastry": "https://images.unsplash.com/photo-1558458601-0d69a278b8e6?auto=format&fit=crop&w=400&h=280&q=75", "fish": "https://images.unsplash.com/photo-1513271224036-f526ad664968?auto=format&fit=crop&w=400&h=280&q=75", "oriental": "https://images.unsplash.com/photo-1634324092536-74480096b939?auto=format&fit=crop&w=400&h=280&q=75", "pizza": "https://images.unsplash.com/photo-1566843972142-a7fcb70de55a?auto=format&fit=crop&w=400&h=280&q=75", "mealprep": "https://images.unsplash.com/photo-1543353071-c953d88f7033?auto=format&fit=crop&w=400&h=280&q=75"};
-const DISH_IMG_MAP={"sig-ete01": "salad", "sig-ete02": "chicken", "sig-ete03": "pastry", "sig-ete04": "fish", "sig-ete05": "soup", "sig-ete06": "meat_veg", "ete01": "chicken", "ete02": "chicken", "ete03": "mealprep", "ete04": "chicken", "ete05": "fish", "ete06": "lasagna", "ete07": "lasagna", "ete08": "veggie", "ete09": "oriental", "ete10": "meat_veg", "ete11": "meat_veg", "ete12": "lasagna", "ete13": "salad", "ete14": "meat_veg", "ete15": "salad", "ete16": "salad", "ete17": "salad", "ete18": "salmon", "ete19": "salad", "ete20": "salad", "ete21": "salad", "ete22": "salad", "ete23": "veggie", "ete24": "salmon", "ete25": "meat_veg", "ete26": "veggie", "ete27": "soup", "ete28": "soup", "ete29": "soup", "ete30": "salad", "ete31": "soup", "ete32": "salmon", "ete33": "fish", "ete34": "fish", "ete35": "salmon", "ete36": "meat_veg", "ete37": "salmon", "ete38": "meat_veg", "ete39": "fish", "ete40": "meat_veg", "ete41": "fish", "ete42": "meat_veg", "ete43": "meat_veg", "ete44": "meat_veg", "ete45": "chicken", "ete46": "chicken", "ete47": "meat_veg", "ete48": "chicken", "ete49": "chicken", "ete50": "meat_veg", "ete51": "meat_veg", "ete52": "meat_veg", "ete53": "chicken", "ete54": "chicken", "ete55": "chicken", "ete56": "pastry", "ete57": "pastry", "ete58": "pastry", "ete59": "pastry", "ete60": "pastry", "ete61": "pastry", "ete62": "pastry", "ete63": "pastry", "ete64": "pastry", "ete65": "pastry", "ete66": "veggie", "ete67": "veggie", "ete68": "veggie", "ete69": "veggie", "ete70": "veggie", "ete71": "veggie", "ete72": "salad", "ete73": "meat_veg", "ete74": "meat_veg", "ete75": "veggie", "ete76": "oriental", "ete77": "pastry", "ete78": "oriental", "ete79": "salad", "ete80": "pastry", "ete81": "salad", "ete82": "veggie", "ete83": "veggie", "ete84": "veggie", "ete85": "mealprep", "ete86": "meat_veg", "ete87": "lasagna", "ete88": "veggie", "ete89": "pizza", "ete90": "pastry", "ete91": "mealprep", "ete92": "mealprep", "ete93": "salad", "ete94": "mealprep", "ete95": "soup", "ete96": "fish"};
-function getDishImg(dish){
-  if(dish.imageBase64) return dish.imageBase64;
-  const key=DISH_IMG_MAP[dish.id];
-  if(key && DISH_IMG_BASE[key]) return DISH_IMG_BASE[key];
-  return null;
-}
 
 function switchMenuTab(catId){
   document.querySelectorAll('.menu-tab').forEach(t=>t.classList.remove('active'));
@@ -3806,9 +3797,7 @@ function renderMenu(){
     html+=`<div class="menu-panel${i===0?' active':''}" id="panel-${cat.id}"><div class="cat-header"><span class="cat-title">${cat.name}</span><span class="cat-count">${catDishes.length} plat${catDishes.length>1?'s':''}</span></div><div class="dishes-grid">`;
     catDishes.forEach(dish=>{
       const selected=sel.includes(dish.id);
-      const _imgSrc=getDishImg(dish);
-      const imgHtml=_imgSrc?`<img src="${_imgSrc}" alt="${dish.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">`:
-        `<span style="font-size:2.2rem;display:flex;align-items:center;justify-content:center;height:100%;">${dish.emoji||'🍽'}</span>`;
+      const imgHtml=dish.imageBase64?`<img src="${dish.imageBase64}" alt="${dish.name}">`:(dish.emoji||'·');
       // Détecter les allergènes selon le profil alimentaire du client
       const fp=currentUser?.foodProfile||{};
       const userAllergies=[...(fp.allergies||[]),(fp.diets||[]).filter(d=>['sans-porc','halal','casher','vegan','vegetarien','pescetarien'].includes(d))].flat();
@@ -4008,7 +3997,7 @@ function exportJPG(){
 
 function exportConservationJPG(){
   const sel=getSelections();
-  const dishes=STATE.dishes.filter(d=>sel.includes(d.id));
+  const dishes=(typeof getAllDishes==='function'?getAllDishes():STATE.dishes).filter(d=>sel.includes(d.id));
   if(!dishes.length){showToast('Aucun plat sélectionné','error');return;}
   const sorted=[...dishes].sort((a,b)=>(a.conservation||4)-(b.conservation||4));
   const today=new Date();
@@ -4689,7 +4678,7 @@ function openClientDetail(userId){
     </div>`;
 
   // Tab menus
-  const dishes = STATE.dishes.filter(d=>sel.includes(d.id));
+  const dishes = getAllDishes().filter(d=>sel.includes(d.id));
   document.getElementById('modal-client-menus').innerHTML = dishes.length
     ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
         ${dishes.map(d=>`<div style="background:white;border:1px solid rgba(45,74,50,.08);border-radius:var(--radius-sm);padding:12px;">
@@ -4706,8 +4695,8 @@ function openClientDetail(userId){
     const factor=(u.defaultPersons||2)/2;
     const CAT_ORD=['Viandes & Poissons','Légumes','Fruits','Crémerie','Épicerie','Herbes & Épices','Autre'];
     dishes.forEach(d=>d.ingredients.forEach(ing=>{
-      const k=ing.name.toLowerCase()+'|'+ing.unit+'|'+ing.cat;
-      if(!map[k])map[k]={name:ing.name,unit:ing.unit,cat:ing.cat||'Autre',qty2p:0};
+      const k=(typeof normalizeIngName==='function'?normalizeIngName(ing.name):ing.name.toLowerCase())+'||'+(ing.unit||'').toLowerCase();
+      if(!map[k])map[k]={name:typeof normalizeIngName==='function'?normalizeIngName(ing.name):ing.name,unit:ing.unit,cat:ing.cat||'Autre',qty2p:0};
       map[k].qty2p+=ing.qty;
     }));
     const bycat={};
@@ -5030,8 +5019,7 @@ function renderApercuAdmin(){
     const dishes = cat.dishIds.map(id => STATE.dishes.find(d => d.id === id)).filter(Boolean);
     html += `<div class="cat-section"><div class="cat-header"><span style="font-size:1.3rem;">${cat.emoji||'·'}</span><span class="cat-title">${cat.name}</span><span class="cat-count">${dishes.length} plat${dishes.length>1?'s':''}</span></div><div class="dishes-grid">`;
     dishes.forEach(dish => {
-      const _aImgSrc=getDishImg?getDishImg(dish):dish.imageBase64;
-      const imgHtml=_aImgSrc?`<img src="${_aImgSrc}" alt="${dish.name}" loading="lazy">`:(dish.emoji||'·');
+      const imgHtml = dish.imageBase64 ? `<img src="${dish.imageBase64}" alt="${dish.name}">` : (dish.emoji||'·');
       html += `<div class="dish-card" style="cursor:default;">
         <div class="dish-img">${imgHtml}</div>
         <div class="dish-body">
@@ -5614,7 +5602,7 @@ function showWelcomeBanner(){
 // ══════════════════════════════════════════════
 function renderConservation(){
   const sel=getSelections();
-  const dishes=STATE.dishes.filter(d=>sel.includes(d.id));
+  const dishes=(typeof getAllDishes==='function'?getAllDishes():STATE.dishes).filter(d=>sel.includes(d.id));
   const list=document.getElementById('conservation-list');
   if(!dishes.length){
     list.innerHTML='<div class="no-content"><h3>Aucun plat sélectionné</h3><p>Sélectionnez vos plats dans la page Menus.</p></div>';
@@ -5649,7 +5637,7 @@ function renderConservation(){
 
 async function downloadConservationPDF(){
   const sel=getSelections();
-  const dishes=STATE.dishes.filter(d=>sel.includes(d.id));
+  const dishes=(typeof getAllDishes==='function'?getAllDishes():STATE.dishes).filter(d=>sel.includes(d.id));
   if(!dishes.length){showToast('Aucun plat sélectionné','error');return;}
   const sorted=[...dishes].sort((a,b)=>(a.conservation||5)-(b.conservation||5));
   const today=new Date();
