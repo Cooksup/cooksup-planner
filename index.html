@@ -3572,13 +3572,8 @@ function markMenuNotifSeen(){
 function dismissMenuNotif(){markMenuNotifSeen();}
 
 function tryNotifyByEmail(subject,body){
-  // Opens user's email client as fallback notification
-  // For automated emails, configure EmailJS: https://www.emailjs.com/
-  console.log('[Email notification]',subject,body);
-  // Uncomment and configure EmailJS to send real emails:
-  // fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},
-  //   body:JSON.stringify({service_id:'YOUR_SERVICE_ID',template_id:'YOUR_TEMPLATE_ID',user_id:'YOUR_PUBLIC_KEY',
-  //     template_params:{to_email:'cooks.up.paris@gmail.com',subject,body}})});
+  // Branchée sur EmailJS — envoie un vrai email à Imene
+  sendEmail(EJS_ADMIN, ADMIN_EMAIL, subject, body);
 }
 
 // ══════════════════════════════════════════════
@@ -4169,7 +4164,10 @@ function sendClientMsg(){
   input.value='';
   renderClientMessages();
   updateAdminBadges();
-  tryNotifyByEmail(`Nouveau message Cook'sUP — ${currentUser.name}`,`De : ${currentUser.name} (${currentUser.email})\n\n${text}`);
+  sendEmail(EJS_ADMIN, ADMIN_EMAIL,
+    `💬 Nouveau message — ${currentUser.name}`,
+    `Bonjour Imene,\n\n${currentUser.name} vous a envoyé un message :\n\n"${text}"\n\nRépondez directement depuis l\'application.\n\n—\nCook\'sUP Planner`
+  );
 }
 
 function markMessagesRead(){
