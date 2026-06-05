@@ -3271,6 +3271,27 @@ async function initDefaults(){
     try { await save.categories(); } catch(e){ console.warn('save.categories failed', e); }
     try { await setShared('menuVersion',MENU_VERSION); } catch(e){ console.warn('menuVersion save failed', e); }
     console.info('[CooksUP] ✅ Carte Été 2026 chargée — 102 plats, 10 catégories');
+
+  } else if(STATE.dishes.length === 0) {
+    // Version OK mais dishes vides (loadState a timeout) — récupération
+    console.warn('[CooksUP] Dishes vides malgré version OK — récupération...');
+    try {
+      const freshDishes = await getShared('dishes');
+      const freshCats   = await getShared('categories');
+      if(freshDishes && freshDishes.length > 0){
+        STATE.dishes = freshDishes;
+        if(freshCats && freshCats.length > 0) STATE.categories = freshCats;
+        console.info('[CooksUP] Dishes récupérés depuis Supabase:', STATE.dishes.length);
+      } else {
+        // Supabase vraiment vide — forcer rechargement complet au prochain boot
+        console.warn('[CooksUP] Supabase vide — reset version pour rechargement');
+        try { await setShared('menuVersion', null); } catch(e){}
+        setTimeout(() => window.location.reload(), 500);
+        return;
+      }
+    } catch(e) {
+      console.warn('[CooksUP] Récupération dishes échouée:', e);
+    }
   }
 
   // Initialiser archives si vide
@@ -5901,7 +5922,7 @@ async function boot(){
   catch(e){ supabaseAvailable=false; console.warn('[CooksUP] checkSupabase timeout'); }
 
   // Étape 2 : Charger le state avec timeout strict
-  try { await Promise.race([loadState(), new Promise(r=>setTimeout(r,8000))]); }
+  try { await Promise.race([loadState(), new Promise(r=>setTimeout(r,15000))]); }
   catch(e){ console.warn('[CooksUP] loadState timeout'); }
 
   console.info('[CooksUP] Boot — Users:', STATE.users.length, '| Dishes:', STATE.dishes.length);
@@ -5916,10 +5937,12 @@ async function boot(){
   setTimeout(async()=>{
     try {
       await initDefaults();
-      console.info('[CooksUP] initDefaults OK');
-      // Rafraîchir le menu si l'utilisateur est déjà connecté
-      if(currentUser && currentUser.role==='client') renderMenu();
-      if(currentUser && currentUser.role==='admin') renderAdmin();
+      console.info('[CooksUP] initDefaults OK — Dishes:', STATE.dishes.length);
+      // Toujours rafraîchir après initDefaults (dishes peuvent avoir été chargées)
+      if(currentUser){
+        if(currentUser.role==='client'){ renderMenu(); populateMonthSelector(); }
+        if(currentUser.role==='admin'){ renderAdmin(); }
+      }
     } catch(e) {
       console.warn('[CooksUP] initDefaults erreur:', e);
     }
