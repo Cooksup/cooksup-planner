@@ -2221,17 +2221,22 @@ body::before{
       <h2 class="page-title">Choisissez <em>vos plats</em></h2>
       <p class="page-sub">Sélectionnez vos plats parmi la carte d'été ☀️</p>
 
-      <div id="archive-banner" style="display:none;background:var(--cream-warm);border:1px solid var(--gold-light);border-radius:var(--radius-sm);padding:10px 16px;font-size:.82rem;color:var(--text);margin-bottom:12px;"></div>
       <div id="notif-banner" class="notif-banner" style="display:none;">
-        <div><strong>Nouveautés disponibles !</strong> Imene a mis à jour la carte d'été. Découvrez les nouvelles recettes ☀️</div>
+        <div><strong>Nouveautés disponibles !</strong> Imene a mis à jour la carte, place à l'automne. Découvrez les nouvelles recettes 🍂</div>
         <button class="notif-close" onclick="dismissMenuNotif()">✕</button>
       </div>
       <div class="persons-bar">
-        <span class="persons-label">Nombre de personnes</span>
+        <span class="persons-label">Adultes</span>
         <div class="persons-ctrl">
-          <button class="persons-btn" onclick="changePersons(-1)">−</button>
-          <span class="persons-num" id="persons-display">2</span>
-          <button class="persons-btn" onclick="changePersons(1)">+</button>
+          <button class="persons-btn" onclick="changeAdults(-1)">−</button>
+          <span class="persons-num" id="adults-display">2</span>
+          <button class="persons-btn" onclick="changeAdults(1)">+</button>
+        </div>
+        <span class="persons-label">Enfants (7-11 ans)</span>
+        <div class="persons-ctrl">
+          <button class="persons-btn" onclick="changeChildren(-1)">−</button>
+          <span class="persons-num" id="children-display">0</span>
+          <button class="persons-btn" onclick="changeChildren(1)">+</button>
         </div>
         <span class="selected-count" id="selected-count" style="display:none;"></span>
       </div>
@@ -2240,15 +2245,6 @@ body::before{
         <button onclick="openSelectionModal()" style="flex:1;min-width:130px;padding:11px 16px;background:white;color:var(--green-deep);border:1px solid var(--green-pale);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;">Ma sélection <span id="selection-badge" style="background:var(--green-deep);color:white;border-radius:10px;padding:1px 7px;font-size:.72rem;margin-left:4px;">0</span></button>
         <button id="voir-liste-btn" onclick="showPage('liste')" style="flex:1;min-width:130px;padding:11px 18px;background:var(--green-deep);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;">Voir ma liste →</button>
         <button id="confirmer-btn" onclick="confirmSelection()" style="flex:1;min-width:160px;padding:11px 20px;background:var(--terracotta);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;">✓ Confirmer</button>
-      </div>
-      <!-- Sélecteur de mois / archives -->
-      <div id="month-selector-wrap" style="margin-bottom:18px;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <label style="font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:500;">📅 Carte du mois</label>
-          <select id="month-selector" onchange="switchMonth(this.value)" style="font-family:'DM Sans',sans-serif;font-size:.85rem;padding:8px 14px;border:1px solid var(--green-pale);border-radius:var(--radius-sm);background:var(--white);color:var(--text);cursor:pointer;outline:none;min-width:200px;">
-            <option value="current">☀️ Été 2026 — Carte actuelle</option>
-          </select>
-        </div>
       </div>
       <div id="menu-categories-area"></div>
 
@@ -2374,11 +2370,19 @@ body::before{
             <div class="form-group"><label class="form-label">Prénom & Nom</label><input type="text" id="profil-name" class="form-input"></div>
             <div class="form-group"><label class="form-label">Email</label><input type="email" id="profil-email" class="form-input"></div>
             <div class="form-group">
-              <label class="form-label">Personnes par défaut</label>
+              <label class="form-label">Adultes par défaut</label>
               <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-                <button class="persons-btn" onclick="changeProfP(-1)">−</button>
-                <span class="persons-num" id="profil-persons-n" style="font-size:1.4rem;">2</span>
-                <button class="persons-btn" onclick="changeProfP(1)">+</button>
+                <button class="persons-btn" onclick="changeProfAdults(-1)">−</button>
+                <span class="persons-num" id="profil-adults-n" style="font-size:1.4rem;">2</span>
+                <button class="persons-btn" onclick="changeProfAdults(1)">+</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Enfants (7-11 ans) par défaut</label>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+                <button class="persons-btn" onclick="changeProfChildren(-1)">−</button>
+                <span class="persons-num" id="profil-children-n" style="font-size:1.4rem;">0</span>
+                <button class="persons-btn" onclick="changeProfChildren(1)">+</button>
               </div>
             </div>
             <button class="btn btn-primary" onclick="saveProfilInfo()">Enregistrer</button>
@@ -2951,6 +2955,124 @@ function fetchWithTimeout(url, options={}, ms=8000){
     .finally(()=>clearTimeout(id));
 }
 
+// ══════════════════════════════════════════════
+//  CHARGEMENT DIRECT DES RECETTES DEPUIS LES TABLES NORMALISÉES SUPABASE
+//  (dishes, recipe_ingredients, recipe_allergens, recipe_conservation)
+// ══════════════════════════════════════════════
+const DISH_CAT_ORDER=["Les Incontournables","Soupes & Veloutés d'Automne","Poissons & Fruits de mer",
+  "Sélection Gourmande","Quiches, Tartes & Clafoutis","Vegan & Végétariens feel-good",
+  "Spécialités Algériennes","Menu Enfants & Familles"];
+const CAT_EMOJI={"Les Incontournables":"🍲","Soupes & Veloutés d'Automne":"🍂","Poissons & Fruits de mer":"🐟",
+  "Sélection Gourmande":"🍖","Quiches, Tartes & Clafoutis":"🥧","Vegan & Végétariens feel-good":"🌱",
+  "Spécialités Algériennes":"🇩🇿","Menu Enfants & Familles":"👶"};
+const ALLERGEN_CODE_MAP={'Gluten':'gluten','Lait':'lactose','Œufs':'oeufs','Poissons':'poisson',
+  'Crustacés':'crustaces','Fruits à coque':'fruits-a-coque','Arachides':'arachides','Soja':'soja',
+  'Céleri':'celeri','Moutarde':'moutarde','Sésame':'sesame','Sulfites':'sulfites'};
+const AISLE_RULES=[
+  ['Viandes & Poissons',['poulet','cuisse','blanc de poulet','filet de poulet','suprem','boeuf','agneau','veau','porc','dinde','kefta','viande','lardon','chorizo','jambon','saumon','cabillaud','thon','bar','dorade','morue','colin','truite','lieu jaune','crevette','poisson']],
+  ['Crémerie',['creme','lait','beurre','fromage','comte','gruyere','emmental','cheddar','parmesan','feta','ricotta','chevre','reblochon','bleu d','fourme','scamorza','yaourt','oeuf','smen']],
+  ['Fruits',['citron','pomme','poire','figue','mangue','avocat','orange']],
+  ['Légumes',['carotte','oignon','poireau','courgette','tomate','poivron','aubergine','champignon','chou','epinard','panais','navet','celeri','fenouil','haricot','brocoli','potimarron','potiron','butternut','patate douce','pomme de terre','ail','echalote','concombre','salade','petit pois','pois chiche','lentille','blette','radis','cepe']],
+  ['Épicerie',['farine','riz','pate','quinoa','pois casse','huile','vinaigre','sauce soja','moutarde','miel','sucre','levure','chapelure','tahini','olive','concassee','seche','bouillon','lait de coco','nouille','vermicelle','cacahuete','sesame','sel','poivre','pad thai','tamarin','pulpe de tomate']],
+  ['Herbes & Épices',['persil','basilic','thym','laurier','menthe','coriandre','ciboulette','aneth','sauge','origan','cumin','curcuma','paprika','cannelle','curry','gingembre','garam masala','tandoori','piment','noix de muscade','noisette','amande','citronnelle','safran']],
+];
+function _normFr(s){
+  return String(s||'').toLowerCase().replace(/œ/g,'oe').replace(/æ/g,'ae')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+function classifyAisle(name){
+  const n=_normFr(name);
+  for(const [cat,kws] of AISLE_RULES){
+    for(const kw of kws){ if(n.includes(_normFr(kw))) return cat; }
+  }
+  return 'Épicerie';
+}
+function parseFridgeDays(duree){
+  duree=duree||'';
+  const m2=duree.match(/(\d+)\s*à\s*(\d+)\s*jour/);
+  if(m2) return parseInt(m2[2],10);
+  if(duree.includes('48h')||duree.includes('24')) return 2;
+  const m1=duree.match(/(\d+)/);
+  if(m1) return parseInt(m1[1],10);
+  return 3;
+}
+function buildIngredientFromRow(row){
+  const isFixe=row.ingredient_type==='Fixe';
+  let out;
+  if(isFixe){
+    if(row.qty_adult===null||row.qty_adult===undefined||row.qty_adult===''){
+      out={type:'fixe',unit:'',qtyAdult:null,qtyChild:null,palier:null};
+    } else {
+      const raw=String(row.qty_adult).trim();
+      const m=raw.match(/^(\d+)\s*(.*)$/);
+      const num=m?parseInt(m[1],10):1;
+      const label=(m&&m[2])?m[2].trim():'';
+      const palierMatch=(row.palier||'').match(/(\d+)/);
+      out={type:'fixe',unit:label||'pièce',qtyAdult:num,qtyChild:num,palier:palierMatch?parseInt(palierMatch[1],10):99};
+    }
+  } else {
+    out={type:'scalable',unit:row.unit,qtyAdult:parseFloat(row.qty_adult),qtyChild:parseFloat(row.qty_child),palier:null};
+  }
+  return {name:row.ingredient_name, ...out, cat:classifyAisle(row.ingredient_name)};
+}
+async function loadDishesFromSupabaseDirect(){
+  try{
+    const [rDishes,rIng,rAllerg,rCons]=await Promise.all([
+      fetchWithTimeout(`${SUPA_URL}/rest/v1/dishes?select=id,name,cat`,{headers:SUPA_H},12000),
+      fetchWithTimeout(`${SUPA_URL}/rest/v1/recipe_ingredients?select=dish_id,ingredient_name,ingredient_type,unit,qty_adult,qty_child,palier`,{headers:SUPA_H},12000),
+      fetchWithTimeout(`${SUPA_URL}/rest/v1/recipe_allergens?select=dish_id,allergen`,{headers:SUPA_H},12000),
+      fetchWithTimeout(`${SUPA_URL}/rest/v1/recipe_conservation?select=*`,{headers:SUPA_H},12000),
+    ]);
+    if(!rDishes.ok||!rIng.ok||!rAllerg.ok||!rCons.ok){
+      console.warn('[CooksUP] Une des requêtes Supabase a échoué', rDishes.status, rIng.status, rAllerg.status, rCons.status);
+      return null;
+    }
+    const [dishRows,ingRows,allergRows,consRows]=await Promise.all([rDishes.json(),rIng.json(),rAllerg.json(),rCons.json()]);
+    if(!dishRows.length||!ingRows.length) return null;
+
+    const ingByDish={};
+    ingRows.forEach(row=>{
+      if(!ingByDish[row.dish_id]) ingByDish[row.dish_id]=[];
+      ingByDish[row.dish_id].push(buildIngredientFromRow(row));
+    });
+    const allergByDish={};
+    allergRows.forEach(row=>{
+      if(!allergByDish[row.dish_id]) allergByDish[row.dish_id]=[];
+      allergByDish[row.dish_id].push(ALLERGEN_CODE_MAP[row.allergen]||_normFr(row.allergen));
+    });
+    const consByDish={};
+    consRows.forEach(row=>{ consByDish[row.dish_id]=row; });
+
+    const dishes=dishRows.map(d=>{
+      const cons=consByDish[d.id]||{};
+      const freezeStatus=cons.freeze_status||'Possible avec précaution';
+      return {
+        id:d.id, name:d.name, cat:d.cat,
+        desc:'', time:'', emoji:CAT_EMOJI[d.cat]||'🍽', imageBase64:'',
+        conservation:parseFridgeDays(cons.fridge_duration),
+        congel:freezeStatus!=='Déconseillée'?'oui':'non',
+        reheat:cons.reheat_instructions||'Réchauffer à feu doux ou au micro-ondes.',
+        freezeStatus, freezeDetail:cons.freeze_detail||'',
+        allergens:allergByDish[d.id]||[],
+        ingredients:ingByDish[d.id]||[],
+      };
+    });
+
+    const byCat={};
+    dishes.forEach(d=>{ if(!byCat[d.cat]) byCat[d.cat]=[]; byCat[d.cat].push(d.id); });
+    const catOrder=DISH_CAT_ORDER.filter(c=>byCat[c]).concat(Object.keys(byCat).filter(c=>!DISH_CAT_ORDER.includes(c)));
+    const categories=catOrder.map((cat,i)=>({
+      id:'cat-aut'+String(i+1).padStart(2,'0'), name:cat, emoji:CAT_EMOJI[cat]||'🍽',
+      dishIds:byCat[cat], published:true, createdAt:new Date().toISOString()
+    }));
+
+    return {dishes, categories};
+  }catch(e){
+    console.warn('[CooksUP] loadDishesFromSupabaseDirect erreur:', e.message);
+    return null;
+  }
+}
+
 async function checkSupabase(){
   if(window.location.protocol === 'file:'){
     console.info('[CooksUP] Mode local (file://) — Supabase désactivé');
@@ -3060,19 +3182,18 @@ async function runSupaDiag(){
 function getLocal(k){try{return JSON.parse(localStorage.getItem('cooksup_'+k)||'null');}catch{return null;}}
 function setLocal(k,v){try{localStorage.setItem('cooksup_'+k,JSON.stringify(v));}catch{}}
 
-const STATE={users:[],dishes:[],categories:[],archives:[],selections:{},messages:[],slots:[],history:{},favorites:{}};
+const STATE={users:[],dishes:[],categories:[],selections:{},messages:[],slots:[],history:{},favorites:{}};
 
 async function loadState(){
-  const[u,d,c,ar,s,m,sl,h,fav]=await Promise.all([
+  const[u,d,c,s,m,sl,h,fav]=await Promise.all([
     getShared('users'),getShared('dishes'),getShared('categories'),
-    getShared('archives'),getShared('selections'),getShared('messages'),getShared('slots'),
+    getShared('selections'),getShared('messages'),getShared('slots'),
     getShared('history'),getShared('favorites')
   ]);
   // Ne jamais écraser avec null/vide si on a déjà des données en mémoire
   if(u!==null) STATE.users=u||[];
   if(d!==null) STATE.dishes=d||[];
   if(c!==null) STATE.categories=c||[];
-  if(ar!==null) STATE.archives=ar||[];
   STATE.selections=s||{};
   if(m!==null) STATE.messages=m||[];
   if(sl!==null) STATE.slots=sl||[];
@@ -3088,13 +3209,12 @@ const save={
   slots:     async()=>{ await setShared('slots',STATE.slots); },
   history:   async()=>{ await setShared('history',STATE.history); },
   favorites: async()=>{ await setShared('favorites',STATE.favorites); },
-  archives:  async()=>{ await setShared('archives',STATE.archives); },
 };
 
 // ── DEFAULT DATA ──
 async function initDefaults(){
   // ── Admin credentials — NE JAMAIS ÉCRASER LES CLIENTS ──
-  const ADMIN_DATA={id:'admin-1',email:'cooks.up.paris@gmail.com',password:'Cooksup@2026',name:'Imene Challali',role:'admin',createdAt:new Date().toISOString(),defaultPersons:2,status:'active'};
+  const ADMIN_DATA={id:'admin-1',email:'cooks.up.paris@gmail.com',password:'Cooksup@2026',name:'Imene Challali',role:'admin',createdAt:new Date().toISOString(),defaultAdults:2,defaultChildren:0,status:'active'};
   const adminIdx=STATE.users.findIndex(u=>u.role==='admin');
 
   if(adminIdx>=0){
@@ -3130,172 +3250,35 @@ async function initDefaults(){
     }
   }
 
-  // ── Versioning carte ──
-  const MENU_VERSION='ete-2026';
-  const currentVersion=await getShared('menuVersion');
-
-  if(currentVersion!==MENU_VERSION){
-    // Archiver la carte actuelle (mai) avant de charger l'été
-    if(STATE.dishes.length&&STATE.categories.length){
-      if(!STATE.archives) STATE.archives=[];
-      const alreadyArchived=STATE.archives.find(a=>a.id==='mai-2026');
-      if(!alreadyArchived){
-        STATE.archives.push({
-          id:'mai-2026',
-          label:'Mai 2026',
-          emoji:'🌸',
-          dishes:[...STATE.dishes],
-          categories:[...STATE.categories]
-        });
-        try { await save.archives(); } catch(e){ console.warn('save.archives failed', e); }
-      }
-    }
-    // Charger carte été 2026 (try/catch pour chaque sauvegarde)
-    STATE.dishes=[
-      {id:"sig-ete01",name:"Bowl signature courgette-burrata, pistou de roquette & noisettes grill\u00e9es",cat:"Plats Signature Cook'sUP",desc:"Fra\u00eecheur italienne, texture, \u00e9l\u00e9gance",time:"20 min",emoji:"\u2728",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froide ou temp\u00e9r\u00e9e",allergens:["lactose", "fruits-a-coque"],ingredients:[{name:"Courgette",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Burrata",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Roquette",qty:80,unit:"g",cat:"L\u00e9gumes"},{name:"Noisettes grill\u00e9es",qty:40,unit:"g",cat:"\u00c9picerie"},{name:"Basilic",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:4,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Fleur de sel",qty:1,unit:"pinc\u00e9e",cat:"\u00c9picerie"}]},
-      {id:"sig-ete02",name:"Poulet r\u00f4ti laqu\u00e9 miel-harissa, semoule aux herbes & raisins secs",cat:"Plats Signature Cook'sUP",desc:"Fusion franco-alg\u00e9rienne d'Imene",time:"50 min",emoji:"\u2728",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 180\u00b0C 15 min, semoule \u00e0 part",allergens:[],ingredients:[{name:"Cuisse de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Miel",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Harissa",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Semoule fine",qty:140,unit:"g",cat:"\u00c9picerie"},{name:"Raisins secs",qty:40,unit:"g",cat:"\u00c9picerie"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Coriandre",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Menthe fra\\u00eeche",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Beurre",qty:20,unit:"g",cat:"Cr\u00e9merie"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"sig-ete03",name:"Brick croustillante ch\u00e8vre frais, figues r\u00f4ties & miel de thym",cat:"Plats Signature Cook'sUP",desc:"Chaud-froid inattendu, oriental gastronomique",time:"25 min",emoji:"\u2728",imageBase64:'',conservation:1,congel:"non",reheat:"Four 200\u00b0C 8 min pour retrouver le croustillant",allergens:["gluten", "lactose"],ingredients:[{name:"Feuilles de brick",qty:4,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Ch\u00e8vre frais",qty:200,unit:"g",cat:"Cr\u00e9merie"},{name:"Figues fra\u00eeches",qty:4,unit:"pi\u00e8ces",cat:"Fruits"},{name:"Miel",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Noix concass\u00e9es",qty:30,unit:"g",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"sig-ete04",name:"Filet de bar en cro\u00fbte d'herbes, sauce vierge tomates cerises-citron confit",cat:"Plats Signature Cook'sUP",desc:"Poisson noble, herbes fra\u00eeches, sauce vive",time:"30 min",emoji:"\u2728",imageBase64:'',conservation:1,congel:"non",reheat:"Four 180\u00b0C 8 min, sauce vierge froide \u00e0 part",allergens:["poisson"],ingredients:[{name:"Filet de bar",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Persil",qty:1,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Basilic",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Ciboulette",qty:6,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Chapelure",qty:40,unit:"g",cat:"\u00c9picerie"},{name:"Tomates cerises",qty:200,unit:"g",cat:"L\u00e9gumes"},{name:"Citron confit",qty:0.5,unit:"pi\u00e8ce",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:4,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"\u00c9chalote",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"}]},
-      {id:"sig-ete05",name:"Gaspacho de past\u00e8que & f\u00e9ta, huile piment\u00e9e & menthe fra\u00eeche",cat:"Plats Signature Cook'sUP",desc:"Le gaspacho signature \u2014 couleur, fra\u00eecheur, waouh",time:"10 min",emoji:"\u2728",imageBase64:'',conservation:1,congel:"non",reheat:"Servir tr\u00e8s frais, garnir au moment",allergens:["lactose"],ingredients:[{name:"Past\u00e8que",qty:800,unit:"g",cat:"Fruits"},{name:"F\u00e9ta",qty:120,unit:"g",cat:"Cr\u00e9merie"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Jus de citron vert",qty:2,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Huile d'olive piment\u00e9e",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Menthe fra\u00eeche",qty:12,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Vinaigre de x\u00e9r\u00e8s",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"}]},
-      {id:"sig-ete06",name:"Wok de crevettes royales coco-citronnelle, vermicelles de riz & l\u00e9gumes croquants",cat:"Plats Signature Cook'sUP",desc:"Voyage en Asie du Sud-Est, saveurs intenses",time:"25 min",emoji:"\u2728",imageBase64:'',conservation:1,congel:"non",reheat:"Po\u00eale feu vif 5 min",allergens:["crustaces"],ingredients:[{name:"Crevettes royales d\u00e9cortiqu\u00e9es",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Lait de coco",qty:200,unit:"ml",cat:"\u00c9picerie"},{name:"Citronnelle",qty:2,unit:"tiges",cat:"Herbes & \u00c9pices"},{name:"Vermicelles de riz cuits",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"Poivron rouge",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Courgette",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Sauce soja",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Coriandre",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Jus de citron vert",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete01",name:"Poulet aux herbes & l\u00e9gumes r\u00f4tis",cat:"Les Incontournables",desc:"Dor\u00e9, parfum\u00e9, l\u00e9gumes fondants",time:"45 min",emoji:"\ud83c\udf57",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 180\u00b0C 15 min ou po\u00eale \u00e0 feu doux",allergens:[],ingredients:[{name:"Blanc de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Courgette",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron rouge",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Romarin",qty:1,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Origan",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete02",name:"Poulet r\u00f4ti aux f\u00e8ves, oignons nouveaux & romarin",cat:"Les Incontournables",desc:"Tendre, herbes fra\u00eeches, saveur printani\u00e8re",time:"50 min",emoji:"\ud83c\udf57",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 170\u00b0C 15 min",allergens:[],ingredients:[{name:"Cuisse de poulet d\u00e9soss\u00e9e",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"F\u00e8ves fra\u00eeches \u00e9coss\u00e9es",qty:200,unit:"g",cat:"L\u00e9gumes"},{name:"Oignon nouveau",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Romarin",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Moutarde",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"}]},
-      {id:"ete03",name:"Poulet mijot\u00e9 aux petits pois & carottes",cat:"Les Incontournables",desc:"Mijot\u00e9 tout doux, sauce onctueuse",time:"50 min",emoji:"\ud83c\udf72",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 10 min",allergens:[],ingredients:[{name:"Cuisse de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Petits pois",qty:160,unit:"g",cat:"L\u00e9gumes"},{name:"Carotte",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Bouillon de volaille",qty:300,unit:"ml",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Laurier",qty:1,unit:"feuilles",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete04",name:"Poulet fondant sauce citron & thym",cat:"Les Incontournables",desc:"Sauce citronn\u00e9e, chair ultra tendre",time:"35 min",emoji:"\ud83c\udf4b",imageBase64:'',conservation:3,congel:"oui",reheat:"Po\u00eale feu doux 8 min avec un filet d'eau",allergens:["lactose"],ingredients:[{name:"Blanc de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Citron",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Thym",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Cr\u00e8me l\u00e9g\u00e8re",qty:100,unit:"ml",cat:"Cr\u00e9merie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete05",name:"Dorade farcie aux petits l\u00e9gumes, caramel de citron",cat:"Les Incontournables",desc:"Poisson entier, l\u00e9gumes fondants, sauce acidul\u00e9e",time:"45 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:2,congel:"non",reheat:"Four 170\u00b0C 10 min, ne pas trop r\u00e9chauffer",allergens:["poisson"],ingredients:[{name:"Dorade enti\u00e8re",qty:1,unit:"pi\u00e8ce",cat:"Viandes & Poissons"},{name:"Courgette",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Fenouil",qty:0.25,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Citron",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Miel",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete06",name:"Lasagnes l\u00e9gumes grill\u00e9s ricotta",cat:"Les Incontournables",desc:"Fondantes, l\u00e9g\u00e8res, color\u00e9es",time:"1h",emoji:"\ud83e\udd6c",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 180\u00b0C 20 min couvert alu",allergens:["gluten", "lactose"],ingredients:[{name:"Feuilles de lasagnes",qty:6,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Ricotta",qty:200,unit:"g",cat:"Cr\u00e9merie"},{name:"Courgette",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Aubergine",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron rouge",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Parmesan r\u00e2p\u00e9",qty:60,unit:"g",cat:"Cr\u00e9merie"},{name:"Coulis de tomate",qty:300,unit:"ml",cat:"\u00c9picerie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Basilic",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete07",name:"Lasagnes au saumon, \u00e9pinards & feta",cat:"Les Incontournables",desc:"Cr\u00e9meux, iod\u00e9, l\u00e9g\u00e8ret\u00e9 assur\u00e9e",time:"55 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 180\u00b0C 20 min couvert alu",allergens:["gluten", "lactose", "poisson"],ingredients:[{name:"Feuilles de lasagnes",qty:6,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Saumon frais",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"\u00c9pinards frais",qty:160,unit:"g",cat:"L\u00e9gumes"},{name:"F\u00e9ta",qty:120,unit:"g",cat:"Cr\u00e9merie"},{name:"Lait",qty:300,unit:"ml",cat:"Cr\u00e9merie"},{name:"Farine",qty:30,unit:"g",cat:"\u00c9picerie"},{name:"Beurre",qty:20,unit:"g",cat:"Cr\u00e9merie"},{name:"Parmesan",qty:60,unit:"g",cat:"Cr\u00e9merie"},{name:"Aneth",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete08",name:"Courgettes farcies f\u00e8ves & ricotta aux herbes",cat:"Les Incontournables",desc:"L\u00e9g\u00e8res, parfum\u00e9es, estivales",time:"40 min",emoji:"\ud83e\udd52",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 180\u00b0C 15 min",allergens:["lactose"],ingredients:[{name:"Courgette ronde",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ricotta",qty:200,unit:"g",cat:"Cr\u00e9merie"},{name:"F\u00e8ves fra\u00eeches",qty:120,unit:"g",cat:"L\u00e9gumes"},{name:"Parmesan",qty:40,unit:"g",cat:"Cr\u00e9merie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Basilic",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Menthe fra\\u00eeche",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete09",name:"Tajine de poulet aux artichauts & citron confit",cat:"Les Incontournables",desc:"Parfum\u00e9, fondant, notes orientales",time:"1h",emoji:"\ud83e\uded9",imageBase64:'',conservation:4,congel:"oui",reheat:"Casserole feu doux 12 min",allergens:[],ingredients:[{name:"Cuisse de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"C\u0153urs d'artichauts",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Citron confit",qty:0.5,unit:"pi\u00e8ce",cat:"\u00c9picerie"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Curcuma",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Gingembre moulu",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Coriandre",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete10",name:"Agneau aux petits pois, menthe & pommes de terre",cat:"Les Incontournables",desc:"Mijot\u00e9 parfum\u00e9, fra\u00eecheur menthe",time:"1h15",emoji:"\ud83e\udd69",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 12 min avec un peu de bouillon",allergens:[],ingredients:[{name:"\u00c9paule d'agneau",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Petits pois",qty:160,unit:"g",cat:"L\u00e9gumes"},{name:"Pomme de terre",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Bouillon",qty:300,unit:"ml",cat:"\u00c9picerie"},{name:"Menthe fra\u00eeche",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Cumin",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete11",name:"Boulettes agneau & velout\u00e9 de petits l\u00e9gumes",cat:"Les Incontournables",desc:"Fondantes en sauce, comfort food l\u00e9ger",time:"45 min",emoji:"\ud83e\udd69",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 10 min",allergens:["oeufs", "gluten"],ingredients:[{name:"Agneau hach\u00e9",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Coriandre moulue",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Petits pois",qty:160,unit:"g",cat:"L\u00e9gumes"},{name:"Carotte",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Bouillon de l\u00e9gumes",qty:300,unit:"ml",cat:"\u00c9picerie"},{name:"Cr\u00e8me l\u00e9g\u00e8re",qty:2,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"}]},
-      {id:"ete12",name:"Cannellonis courgettes-ricotta",cat:"Les Incontournables",desc:"Fondants, sauce tomate, fromage gratin\u00e9",time:"55 min",emoji:"\ud83e\udd6c",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 180\u00b0C 20 min couvert alu",allergens:["gluten", "lactose"],ingredients:[{name:"Tubes cannelloni",qty:6,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Ricotta",qty:200,unit:"g",cat:"Cr\u00e9merie"},{name:"Courgette",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Parmesan",qty:40,unit:"g",cat:"Cr\u00e9merie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Basilic",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Coulis de tomate",qty:300,unit:"ml",cat:"\u00c9picerie"},{name:"Noix de muscade",qty:1,unit:"pinc\u00e9e",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete13",name:"Salade ni\u00e7oise revisit\u00e9e",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Fra\u00eeche, color\u00e9e, repas complet",time:"20 min",emoji:"\ud83e\udd57",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froide, sortir 10 min du frigo",allergens:["poisson", "oeufs"],ingredients:[{name:"Thon en bo\u00eete",qty:160,unit:"g",cat:"Viandes & Poissons"},{name:"\u0152uf dur",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Haricots verts",qty:120,unit:"g",cat:"L\u00e9gumes"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Olives noires",qty:8,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Anchois",qty:4,unit:"filets",cat:"Viandes & Poissons"},{name:"C\u00e2pres",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Laitue",qty:4,unit:"feuilles",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete14",name:"Bowl tha\u00ef b\u0153uf-mangue",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Sucr\u00e9-\u00e9pic\u00e9, croquant, exotique",time:"25 min",emoji:"\ud83e\udd6d",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froide",allergens:[],ingredients:[{name:"B\u0153uf \u00e9minc\u00e9",qty:200,unit:"g",cat:"Viandes & Poissons"},{name:"Mangue",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Vermicelles de riz cuits",qty:120,unit:"g",cat:"\u00c9picerie"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Carotte",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Menthe fra\\u00eeche",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Basilic tha\u00ef",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Cacahu\u00e8tes concass\u00e9es",qty:20,unit:"g",cat:"\u00c9picerie"},{name:"Sauce soja",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron vert",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Miel",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Gingembre",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Piment doux",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete15",name:"Salade de lentilles beluga & f\u00e9ta",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Prot\u00e9in\u00e9e, savoureuse, l\u00e9g\u00e8re",time:"25 min",emoji:"\ud83e\uded9",imageBase64:'',conservation:2,congel:"non",reheat:"Se mange froide ou temp\u00e9r\u00e9e",allergens:["lactose"],ingredients:[{name:"Lentilles beluga cuites",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"F\u00e9ta",qty:80,unit:"g",cat:"Cr\u00e9merie"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon rouge",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Menthe fra\\u00eeche",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre balsamique",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Moutarde",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"}]},
-      {id:"ete16",name:"Quinoa estival pois chiches-tomates s\u00e9ch\u00e9es",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Complet, ensoleill\u00e9, l\u00e9ger",time:"20 min",emoji:"\ud83c\udf3f",imageBase64:'',conservation:2,congel:"non",reheat:"Se mange froide",allergens:[],ingredients:[{name:"Quinoa cuit",qty:140,unit:"g",cat:"\u00c9picerie"},{name:"Pois chiches cuits",qty:120,unit:"g",cat:"\u00c9picerie"},{name:"Tomates s\u00e9ch\u00e9es",qty:6,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Poivron rouge",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Roquette",qty:40,unit:"g",cat:"L\u00e9gumes"},{name:"Basilic",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Pignons de pin",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete17",name:"Salade caesar poulet grill\u00e9",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Classique gourmand, sauce maison",time:"25 min",emoji:"\ud83e\udd57",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froide, sauce \u00e0 part",allergens:["lactose", "oeufs", "poisson"],ingredients:[{name:"Blanc de poulet grill\u00e9",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Laitue romaine",qty:8,unit:"feuilles",cat:"L\u00e9gumes"},{name:"Parmesan en copeaux",qty:40,unit:"g",cat:"Cr\u00e9merie"},{name:"Pain grill\u00e9 en cro\u00fbtons",qty:4,unit:"tranches",cat:"\u00c9picerie"},{name:"Anchois",qty:4,unit:"filets",cat:"Viandes & Poissons"},{name:"Mayonnaise",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Fruits"},{name:"Sauce worcestershire",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"}]},
-      {id:"ete18",name:"Bowl saumon-avocat-concombre",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Frais, iod\u00e9, rassasiant",time:"20 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froide, riz r\u00e9chauffable \u00e0 part",allergens:["poisson"],ingredients:[{name:"Saumon fum\u00e9 ou grill\u00e9",qty:200,unit:"g",cat:"Viandes & Poissons"},{name:"Avocat",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Riz japonais cuit",qty:140,unit:"g",cat:"\u00c9picerie"},{name:"Graines de s\u00e9same",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Sauce soja",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Coriandre",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile de s\u00e9same",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"}]},
-      {id:"ete19",name:"Taboul\u00e9 libanais \u00e0 la menthe",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Frais, herbac\u00e9, authentique",time:"20 min",emoji:"\ud83c\udf3f",imageBase64:'',conservation:2,congel:"non",reheat:"Se mange froide",allergens:[],ingredients:[{name:"Boulgour fin",qty:120,unit:"g",cat:"\u00c9picerie"},{name:"Tomate",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Persil",qty:2,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Menthe fra\u00eeche",qty:12,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Oignon nouveau",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:4,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:2,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete20",name:"Salade de p\u00e2tes soleil",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Color\u00e9e, m\u00e9diterran\u00e9enne, savoureuse",time:"20 min",emoji:"\ud83c\udf5d",imageBase64:'',conservation:2,congel:"non",reheat:"Se mange froide",allergens:["gluten", "lactose"],ingredients:[{name:"P\u00e2tes farfalle cuites",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron rouge r\u00f4ti",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Olives",qty:12,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"F\u00e9ta",qty:60,unit:"g",cat:"Cr\u00e9merie"},{name:"Basilic",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Oignon rouge",qty:0.25,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre de vin",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Origan",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete21",name:"Fattouch libanais",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Croquant, acidul\u00e9, herbes fra\u00eeches",time:"15 min",emoji:"\ud83c\udf3f",imageBase64:'',conservation:1,congel:"non",reheat:"Ajouter le pain au moment de servir",allergens:["gluten"],ingredients:[{name:"Pain pita grill\u00e9",qty:2,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Radis",qty:8,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Laitue romaine",qty:4,unit:"feuilles",cat:"L\u00e9gumes"},{name:"Oignon nouveau",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Menthe fra\u00eeche",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:2,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Sumac",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete22",name:"Salade de riz complet l\u00e9gumes grill\u00e9s",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Nourrissante, grill\u00e9e, parfum\u00e9e",time:"30 min",emoji:"\ud83c\udf3e",imageBase64:'',conservation:2,congel:"non",reheat:"Se mange froide ou temp\u00e9r\u00e9e",allergens:["lactose"],ingredients:[{name:"Riz complet cuit",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"Courgette grill\u00e9e",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron grill\u00e9",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"F\u00e9ta",qty:60,unit:"g",cat:"Cr\u00e9merie"},{name:"Pignons de pin",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Basilic",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre balsamique",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Moutarde",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"}]},
-      {id:"ete23",name:"Salade ti\u00e8de haricots verts-amandes grill\u00e9es",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Simple, \u00e9l\u00e9gante, croquante",time:"20 min",emoji:"\ud83c\udf31",imageBase64:'',conservation:2,congel:"non",reheat:"Po\u00eale feu doux 5 min",allergens:["fruits-a-coque"],ingredients:[{name:"Haricots verts",qty:300,unit:"g",cat:"L\u00e9gumes"},{name:"Amandes effil\u00e9es grill\u00e9es",qty:40,unit:"g",cat:"\u00c9picerie"},{name:"\u00c9chalote",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre de cidre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete24",name:"Poke bowl thon-s\u00e9same",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Frais, japonais, \u00e9quilibr\u00e9",time:"20 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froide, riz \u00e0 part si r\u00e9chauffage",allergens:["poisson"],ingredients:[{name:"Thon frais",qty:200,unit:"g",cat:"Viandes & Poissons"},{name:"Riz japonais cuit",qty:140,unit:"g",cat:"\u00c9picerie"},{name:"Avocat",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Carotte",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Graines de s\u00e9same",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Algues wakam\u00e9 r\u00e9hydrat\u00e9es",qty:20,unit:"g",cat:"\u00c9picerie"},{name:"Sauce soja",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile de s\u00e9same",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Mirin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Jus de citron vert",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Fruits"}]},
-      {id:"ete25",name:"Wok de b\u0153uf haricots verts-s\u00e9same",cat:"Salades repas & Bowls g\u00e9n\u00e9reux",desc:"Saveurs asiatiques, croquant, rapide",time:"20 min",emoji:"\ud83e\udd69",imageBase64:'',conservation:2,congel:"non",reheat:"Wok feu vif 5 min",allergens:[],ingredients:[{name:"B\u0153uf \u00e9minc\u00e9",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Haricots verts",qty:200,unit:"g",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Sauce soja",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile de s\u00e9same",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Graines de s\u00e9same",qty:2,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Riz basmati cuit",qty:140,unit:"g",cat:"\u00c9picerie"}]},
-      {id:"ete26",name:"Gaspacho de petits pois, citron & basilic",cat:"Soupes froides & Gaspachos",desc:"Frais, vert vif, parfum\u00e9",time:"15 min",emoji:"\ud83e\udd63",imageBase64:'',conservation:2,congel:"non",reheat:"Mixer \u00e0 nouveau avant de servir",allergens:[],ingredients:[{name:"Petits pois",qty:300,unit:"g",cat:"L\u00e9gumes"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Basilic",qty:12,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Jus de citron",qty:2,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Eau froide",qty:200,unit:"ml",cat:"\u00c9picerie"},{name:"Menthe fra\\u00eeche",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete27",name:"Soupe froide courgettes-ch\u00e8vre frais",cat:"Soupes froides & Gaspachos",desc:"Onctueux, d\u00e9licat, estival",time:"20 min",emoji:"\ud83e\udd63",imageBase64:'',conservation:2,congel:"non",reheat:"Garnir au moment de servir",allergens:["lactose"],ingredients:[{name:"Courgette",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ch\u00e8vre frais",qty:80,unit:"g",cat:"Cr\u00e9merie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Bouillon de l\u00e9gumes",qty:300,unit:"ml",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Basilic",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Pignons de pin",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete28",name:"Gaspacho andalou classique",cat:"Soupes froides & Gaspachos",desc:"Tomate intense, l\u00e9gumes crus, rafra\u00eechissant",time:"15 min",emoji:"\ud83c\udf45",imageBase64:'',conservation:2,congel:"non",reheat:"Remuer avant de servir",allergens:[],ingredients:[{name:"Tomates m\u00fbres",qty:6,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron rouge",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron vert",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.25,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre de x\u00e9r\u00e8s",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Pain rassis tremp\u00e9",qty:60,unit:"g",cat:"\u00c9picerie"}]},
-      {id:"ete29",name:"Soupe froide concombre-yaourt-aneth",cat:"Soupes froides & Gaspachos",desc:"L\u00e9g\u00e8ret\u00e9 absolue, fra\u00eecheur grecque",time:"10 min",emoji:"\ud83e\udd52",imageBase64:'',conservation:1,congel:"non",reheat:"Remuer avant de servir",allergens:["lactose"],ingredients:[{name:"Concombre",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Yaourt grec",qty:200,unit:"g",cat:"Cr\u00e9merie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Aneth",qty:6,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete30",name:"Soupe froide avocat-citron vert",cat:"Soupes froides & Gaspachos",desc:"Cr\u00e9meuse, exotique, vitamin\u00e9e",time:"10 min",emoji:"\ud83e\udd51",imageBase64:'',conservation:1,congel:"non",reheat:"Filmer au contact pour \u00e9viter l'oxydation",allergens:["lactose"],ingredients:[{name:"Avocat m\u00fbr",qty:2,unit:"pi\u00e8ces",cat:"Fruits"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Citron vert",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Bouillon de l\u00e9gumes froid",qty:200,unit:"ml",cat:"\u00c9picerie"},{name:"Yaourt grec",qty:4,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"},{name:"Coriandre fra\u00eeche",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Piment doux",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete31",name:"Gaspacho betterave-gingembre",cat:"Soupes froides & Gaspachos",desc:"Couleur intense, peps gingembre, original",time:"15 min",emoji:"\ud83e\uded9",imageBase64:'',conservation:2,congel:"non",reheat:"Garnir d'un filet de yaourt au moment de servir",allergens:["lactose"],ingredients:[{name:"Betterave cuite",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Vinaigre de cidre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Eau froide",qty:200,unit:"ml",cat:"\u00c9picerie"},{name:"Yaourt grec",qty:2,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"}]},
-      {id:"ete32",name:"Saumon miel-moutarde & brocoli",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Laqu\u00e9, fondant, l\u00e9gume croquant",time:"25 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:2,congel:"non",reheat:"Po\u00eale feu doux 5 min ou four 170\u00b0C 10 min",allergens:["poisson"],ingredients:[{name:"Pav\u00e9 de saumon",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Brocoli",qty:200,unit:"g",cat:"L\u00e9gumes"},{name:"Miel",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Moutarde \u00e0 l'ancienne",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Fruits"}]},
-      {id:"ete33",name:"Cabillaud r\u00f4ti & l\u00e9gumes",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Fondant, saveurs m\u00e9ridionales",time:"30 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:2,congel:"non",reheat:"Four 170\u00b0C 10 min, ne pas trop r\u00e9chauffer",allergens:["poisson"],ingredients:[{name:"Dos de cabillaud",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Courgette",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete34",name:"Filet de dorade sauce vierge & l\u00e9gumes grill\u00e9s",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"D\u00e9licat, sauce fra\u00eeche, l\u00e9gumes dor\u00e9s",time:"25 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:2,congel:"non",reheat:"Four 170\u00b0C 8 min, sauce vierge froide \u00e0 part",allergens:["poisson"],ingredients:[{name:"Filet de dorade",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Courgette",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:3,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Basilic",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Coriandre",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"\u00c9chalote",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"}]},
-      {id:"ete35",name:"Papillote de saumon citron-aneth",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Cuit \u00e0 la vapeur, fondant, parfum\u00e9",time:"25 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:2,congel:"non",reheat:"Four 180\u00b0C 10 min en papillote",allergens:["poisson"],ingredients:[{name:"Pav\u00e9 de saumon",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Citron",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Aneth",qty:6,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Vin blanc sec",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete36",name:"Crevettes saut\u00e9es ail-persil",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Rapide, parfum\u00e9, savoureux",time:"15 min",emoji:"\ud83e\udd90",imageBase64:'',conservation:1,congel:"non",reheat:"Po\u00eale feu vif 3 min, ne pas trop r\u00e9chauffer",allergens:["crustaces"],ingredients:[{name:"Crevettes d\u00e9cortiqu\u00e9es",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:1,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Citron",qty:0.5,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Beurre",qty:1,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"},{name:"Piment doux",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete37",name:"Tartare de saumon avocat",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Frais, cr\u00e9meux, \u00e9l\u00e9gant",time:"15 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froid, pr\u00e9parer le jour m\u00eame",allergens:["poisson"],ingredients:[{name:"Saumon tr\u00e8s frais",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Avocat",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"\u00c9chalote",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Jus de citron vert",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Sauce soja",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Huile de s\u00e9same",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Coriandre fra\u00eeche",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Graines de s\u00e9same",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"}]},
-      {id:"ete38",name:"Thon \u00e0 la Basquaise",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Saveurs du Pays Basque, poivrons fondants",time:"35 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:2,congel:"oui",reheat:"Casserole feu doux 8 min",allergens:["poisson"],ingredients:[{name:"Steak de thon",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Poivron rouge",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron vert",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Laurier",qty:1,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Piment d'Espelette",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete39",name:"Calamars grill\u00e9s sauce vierge",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Tendre, iod\u00e9, sauce fra\u00eeche",time:"20 min",emoji:"\ud83e\udd91",imageBase64:'',conservation:1,congel:"non",reheat:"Po\u00eale feu vif 2 min, sauce vierge froide \u00e0 part",allergens:[],ingredients:[{name:"Calamars nettoy\u00e9s",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"\u00c9chalote",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Basilic",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:3,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete40",name:"Crevettes marin\u00e9es coco-citronnelle",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Exotique, parfum\u00e9, saveurs d'Asie",time:"20 min",emoji:"\ud83e\udd90",imageBase64:'',conservation:1,congel:"non",reheat:"Po\u00eale feu vif 3 min",allergens:["crustaces"],ingredients:[{name:"Crevettes d\u00e9cortiqu\u00e9es",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Lait de coco",qty:100,unit:"ml",cat:"\u00c9picerie"},{name:"Citronnelle",qty:2,unit:"tiges",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Sauce soja",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Coriandre fra\u00eeche",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Jus de citron vert",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Fruits"}]},
-      {id:"ete41",name:"Filets de bar r\u00f4tis en cro\u00fbte de s\u00e9same",cat:"Poissons & Fruits de mer l\u00e9gers",desc:"Croustillant dehors, nacr\u00e9 dedans",time:"20 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:2,congel:"non",reheat:"Four 180\u00b0C 8 min, ne pas trop r\u00e9chauffer",allergens:["poisson"],ingredients:[{name:"Filet de bar",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Graines de s\u00e9same blanc et noir",qty:4,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Sauce soja",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Miel",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Coriandre",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete42",name:"B\u0153uf saut\u00e9 soja-miel & l\u00e9gumes croquants",cat:"S\u00e9lection Gourmande",desc:"Wok savoureux, l\u00e9gumes al dente",time:"20 min",emoji:"\ud83e\udd69",imageBase64:'',conservation:2,congel:"non",reheat:"Wok feu vif 5 min",allergens:[],ingredients:[{name:"B\u0153uf \u00e9minc\u00e9",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Carotte",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Poivron rouge",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Pousses de soja",qty:160,unit:"g",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Sauce soja",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Miel",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile de s\u00e9same",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Riz basmati cuit",qty:140,unit:"g",cat:"\u00c9picerie"}]},
-      {id:"ete43",name:"B\u0153uf saut\u00e9 aux oignons fa\u00e7on bistrot",cat:"S\u00e9lection Gourmande",desc:"Caram\u00e9lis\u00e9, fondant, bistrot parisien",time:"25 min",emoji:"\ud83e\udd69",imageBase64:'',conservation:2,congel:"non",reheat:"Po\u00eale feu moyen 8 min",allergens:[],ingredients:[{name:"B\u0153uf \u00e9minc\u00e9",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Oignon",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Beurre",qty:1,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"},{name:"Vinaigre balsamique",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete44",name:"Onglet de b\u0153uf marin\u00e9 & l\u00e9gumes r\u00f4tis",cat:"S\u00e9lection Gourmande",desc:"Marinade express, cuisson parfaite",time:"30 min",emoji:"\ud83e\udd69",imageBase64:'',conservation:2,congel:"non",reheat:"Po\u00eale feu vif 3 min, l\u00e9gumes four 170\u00b0C 10 min",allergens:[],ingredients:[{name:"Onglet de b\u0153uf",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Courgette",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Sauce soja",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Moutarde",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Romarin",qty:1,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete45",name:"Poulet tikka masala & courgettes",cat:"S\u00e9lection Gourmande",desc:"\u00c9pic\u00e9 doux, sauce tomate-coco",time:"35 min",emoji:"\ud83c\udf5b",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 10 min",allergens:[],ingredients:[{name:"Blanc de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Courgette",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Coulis de tomate",qty:200,unit:"ml",cat:"\u00c9picerie"},{name:"Cr\u00e8me de coco",qty:100,unit:"ml",cat:"\u00c9picerie"},{name:"Garam masala",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Curcuma",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Coriandre moulue",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete46",name:"Curry de poulet aux f\u00e8ves",cat:"S\u00e9lection Gourmande",desc:"Doux, cr\u00e9meux, l\u00e9gumineuses de saison",time:"30 min",emoji:"\ud83c\udf5b",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 10 min",allergens:[],ingredients:[{name:"Blanc de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"F\u00e8ves fra\u00eeches",qty:200,unit:"g",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Lait de coco",qty:200,unit:"ml",cat:"\u00c9picerie"},{name:"Curry",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Curcuma",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Coriandre fra\u00eeche",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete47",name:"Brochettes poulet marin\u00e9-l\u00e9gumes grill\u00e9s",cat:"S\u00e9lection Gourmande",desc:"Grill\u00e9, marin\u00e9, saveurs d'\u00e9t\u00e9",time:"25 min",emoji:"\ud83c\udf62",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 180\u00b0C 10 min ou po\u00eale grill 5 min",allergens:[],ingredients:[{name:"Blanc de poulet en cubes",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Poivron rouge",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Courgette",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Oignon rouge",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Paprika",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Origan",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete48",name:"Curry poulet, asperges, courgette & basilic",cat:"S\u00e9lection Gourmande",desc:"Curry vert tha\u00ef, l\u00e9gumes croquants",time:"30 min",emoji:"\ud83c\udf5b",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 10 min",allergens:[],ingredients:[{name:"Blanc de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Asperges vertes",qty:8,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Courgette",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Lait de coco",qty:200,unit:"ml",cat:"\u00c9picerie"},{name:"P\u00e2te de curry vert",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Basilic tha\u00ef",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete49",name:"Poulet \u00e0 la cr\u00e8me de basilic & courgettes",cat:"S\u00e9lection Gourmande",desc:"Onctueux, parfum\u00e9, fondant",time:"30 min",emoji:"\ud83c\udf57",imageBase64:'',conservation:2,congel:"non",reheat:"Po\u00eale feu doux 8 min avec un filet d'eau",allergens:["lactose"],ingredients:[{name:"Blanc de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Courgette",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Cr\u00e8me l\u00e9g\u00e8re",qty:160,unit:"ml",cat:"Cr\u00e9merie"},{name:"Basilic",qty:16,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"\u00c9chalote",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Parmesan r\u00e2p\u00e9",qty:20,unit:"g",cat:"Cr\u00e9merie"}]},
-      {id:"ete50",name:"Tataki de b\u0153uf, sauce ponzu & salade de concombre",cat:"S\u00e9lection Gourmande",desc:"Japonisant, saisi rapide, frais",time:"20 min",emoji:"\ud83e\udd69",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froid, trancher au moment de servir",allergens:[],ingredients:[{name:"Filet de b\u0153uf",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Concombre",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Sauce soja",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:2,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Mirin",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile de s\u00e9same",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Graines de s\u00e9same",qty:2,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Ciboulette",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete51",name:"B\u0153uf hach\u00e9 fa\u00e7on kefta, sauce tomate fra\u00eeche & pois chiches",cat:"S\u00e9lection Gourmande",desc:"\u00c9pic\u00e9, moelleux, sauce vive",time:"30 min",emoji:"\ud83e\udd69",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 10 min",allergens:[],ingredients:[{name:"B\u0153uf hach\u00e9",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Pois chiches cuits",qty:120,unit:"g",cat:"\u00c9picerie"},{name:"Tomates fra\u00eeches",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Coriandre",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Paprika",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Cannelle",qty:0.25,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete52",name:"B\u0153uf saut\u00e9 aux poivrons & tomates cerises fa\u00e7on basquaise",cat:"S\u00e9lection Gourmande",desc:"Color\u00e9, go\u00fbteux, soleil du sud",time:"25 min",emoji:"\ud83e\udd69",imageBase64:'',conservation:2,congel:"oui",reheat:"Po\u00eale feu moyen 8 min",allergens:[],ingredients:[{name:"B\u0153uf \u00e9minc\u00e9",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Poivron rouge",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron vert",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomates cerises",qty:160,unit:"g",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Piment d'Espelette",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete53",name:"Escalopes de poulet pan\u00e9es aux herbes, salade verte",cat:"S\u00e9lection Gourmande",desc:"Dor\u00e9es, croustillantes, herbes fra\u00eeches",time:"25 min",emoji:"\ud83c\udf57",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 180\u00b0C 10 min pour garder le croustillant",allergens:["gluten", "oeufs"],ingredients:[{name:"Escalope de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Chapelure",qty:80,unit:"g",cat:"\u00c9picerie"},{name:"Persil",qty:8,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Parmesan r\u00e2p\u00e9",qty:2,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"},{name:"Laitue",qty:4,unit:"feuilles",cat:"L\u00e9gumes"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete54",name:"Poulet tandoori, ra\u00efta concombre-menthe",cat:"S\u00e9lection Gourmande",desc:"\u00c9pic\u00e9 et frais, saveurs indiennes",time:"20 min",emoji:"\ud83c\udf57",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 200\u00b0C 15 min ou po\u00eale grill 8 min",allergens:["lactose"],ingredients:[{name:"Cuisse de poulet d\u00e9soss\u00e9e",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Yaourt grec",qty:160,unit:"g",cat:"Cr\u00e9merie"},{name:"Tandoori masala",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Coriandre moulue",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Curcuma",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Menthe fra\\u00eeche",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete55",name:"Supr\u00eame de poulet farci ricotta-basilic, tomates confites",cat:"S\u00e9lection Gourmande",desc:"\u00c9l\u00e9gant, fondant, saveurs italiennes",time:"45 min",emoji:"\ud83c\udf57",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 180\u00b0C 15 min tranch\u00e9",allergens:["lactose"],ingredients:[{name:"Supr\u00eame de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"Ricotta",qty:120,unit:"g",cat:"Cr\u00e9merie"},{name:"Basilic",qty:12,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Parmesan r\u00e2p\u00e9",qty:40,unit:"g",cat:"Cr\u00e9merie"},{name:"Tomates cerises confites",qty:6,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete56",name:"G\u00e2teau de courgettes aux graines & herbes fra\u00eeches",cat:"Quiches, Tartes & Clafoutis",desc:"Moelleux, parfum\u00e9, plein de fra\u00eecheur",time:"50 min",emoji:"\ud83e\udd52",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 170\u00b0C 10 min ou tranches \u00e0 la po\u00eale",allergens:["gluten", "oeufs", "lactose"],ingredients:[{name:"Courgette r\u00e2p\u00e9e",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"\u0152ufs",qty:4,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Farine",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"Levure chimique",qty:1,unit:"sachet",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:100,unit:"ml",cat:"\u00c9picerie"},{name:"Gruy\u00e8re r\u00e2p\u00e9",qty:120,unit:"g",cat:"Cr\u00e9merie"},{name:"Graines de tournesol",qty:30,unit:"g",cat:"\u00c9picerie"},{name:"Graines de courge",qty:30,unit:"g",cat:"\u00c9picerie"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Ciboulette",qty:6,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete57",name:"Tarte fine asperges, mozzarella & poutargue",cat:"Quiches, Tartes & Clafoutis",desc:"Raffin\u00e9e, fondante, umami",time:"35 min",emoji:"\ud83c\udf3f",imageBase64:'',conservation:2,congel:"non",reheat:"Four 180\u00b0C 10 min",allergens:["gluten", "lactose"],ingredients:[{name:"P\u00e2te feuillet\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"Asperges vertes",qty:12,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Mozzarella",qty:250,unit:"g",cat:"Cr\u00e9merie"},{name:"Poutargue r\u00e2p\u00e9e",qty:40,unit:"g",cat:"Viandes & Poissons"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Zeste de citron",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Roquette",qty:20,unit:"g",cat:"L\u00e9gumes"}]},
-      {id:"ete58",name:"Quiche asperges & ch\u00e8vre",cat:"Quiches, Tartes & Clafoutis",desc:"Fondante, go\u00fbt d\u00e9licat, recette de saison",time:"55 min",emoji:"\ud83c\udf3f",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 170\u00b0C 15 min",allergens:["gluten", "lactose", "oeufs"],ingredients:[{name:"P\u00e2te bris\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"Asperges vertes",qty:12,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ch\u00e8vre frais",qty:200,unit:"g",cat:"Cr\u00e9merie"},{name:"\u0152ufs",qty:4,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Cr\u00e8me fra\u00eeche",qty:200,unit:"ml",cat:"Cr\u00e9merie"},{name:"Lait",qty:100,unit:"ml",cat:"Cr\u00e9merie"},{name:"Ciboulette",qty:6,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete59",name:"Quiche f\u00e8ves, petits pois & ch\u00e8vre frais",cat:"Quiches, Tartes & Clafoutis",desc:"Couleurs de saison, fra\u00eecheur v\u00e9g\u00e9tale",time:"55 min",emoji:"\ud83c\udf31",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 170\u00b0C 15 min",allergens:["gluten", "lactose", "oeufs"],ingredients:[{name:"P\u00e2te bris\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"F\u00e8ves fra\u00eeches",qty:160,unit:"g",cat:"L\u00e9gumes"},{name:"Petits pois",qty:120,unit:"g",cat:"L\u00e9gumes"},{name:"Ch\u00e8vre frais",qty:200,unit:"g",cat:"Cr\u00e9merie"},{name:"\u0152ufs",qty:4,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Cr\u00e8me fra\u00eeche",qty:200,unit:"ml",cat:"Cr\u00e9merie"},{name:"Lait",qty:100,unit:"ml",cat:"Cr\u00e9merie"},{name:"Menthe fra\u00eeche",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete60",name:"Quiche poulet, champignons & poireaux",cat:"Quiches, Tartes & Clafoutis",desc:"G\u00e9n\u00e9reuse, fondante, r\u00e9confortante",time:"1h",emoji:"\ud83c\udf44",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 170\u00b0C 15 min",allergens:["gluten", "lactose", "oeufs"],ingredients:[{name:"P\u00e2te bris\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"Blanc de poulet",qty:200,unit:"g",cat:"Viandes & Poissons"},{name:"Champignons de Paris",qty:200,unit:"g",cat:"L\u00e9gumes"},{name:"Poireau",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"\u0152ufs",qty:4,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Cr\u00e8me fra\u00eeche",qty:200,unit:"ml",cat:"Cr\u00e9merie"},{name:"Lait",qty:100,unit:"ml",cat:"Cr\u00e9merie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Beurre",qty:1,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"},{name:"Gruy\u00e8re r\u00e2p\u00e9",qty:60,unit:"g",cat:"Cr\u00e9merie"}]},
-      {id:"ete61",name:"Tarte fine courgettes, ricotta & basilic",cat:"Quiches, Tartes & Clafoutis",desc:"L\u00e9g\u00e8re, parfum\u00e9e, cro\u00fbte croustillante",time:"40 min",emoji:"\ud83e\udd52",imageBase64:'',conservation:3,congel:"non",reheat:"Four 180\u00b0C 10 min",allergens:["gluten", "lactose", "oeufs"],ingredients:[{name:"P\u00e2te feuillet\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"Courgette en rondelles",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ricotta",qty:300,unit:"g",cat:"Cr\u00e9merie"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Parmesan r\u00e2p\u00e9",qty:60,unit:"g",cat:"Cr\u00e9merie"},{name:"Basilic",qty:12,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Zeste de citron",qty:1,unit:"pi\u00e8ce",cat:"Fruits"}]},
-      {id:"ete62",name:"Tarte rustique oignons caram\u00e9lis\u00e9s & comt\u00e9",cat:"Quiches, Tartes & Clafoutis",desc:"Fondante, sucr\u00e9e-sal\u00e9e, fromage fondu",time:"1h15",emoji:"\ud83e\uddc5",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 170\u00b0C 15 min",allergens:["gluten", "lactose"],ingredients:[{name:"P\u00e2te bris\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"Oignon",qty:8,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Comt\u00e9 r\u00e2p\u00e9",qty:160,unit:"g",cat:"Cr\u00e9merie"},{name:"Beurre",qty:2,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre balsamique",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Sucre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Thym",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete63",name:"Tarte rustique tomates cerises & mozzarella di bufala",cat:"Quiches, Tartes & Clafoutis",desc:"Premi\u00e8res tomates, fondant de bufala",time:"40 min",emoji:"\ud83c\udf45",imageBase64:'',conservation:2,congel:"non",reheat:"Four 170\u00b0C 8 min, mozzarella froide apr\u00e8s",allergens:["gluten", "lactose"],ingredients:[{name:"P\u00e2te feuillet\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"Tomates cerises",qty:300,unit:"g",cat:"L\u00e9gumes"},{name:"Mozzarella di bufala",qty:250,unit:"g",cat:"Cr\u00e9merie"},{name:"Moutarde",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Basilic",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Origan",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"}]},
-      {id:"ete64",name:"Gratin rhubarbe & quinoa version sal\u00e9e, ch\u00e8vre & thym",cat:"Quiches, Tartes & Clafoutis",desc:"Saveur originale, acidit\u00e9 & douceur",time:"45 min",emoji:"\ud83c\udf3f",imageBase64:'',conservation:3,congel:"non",reheat:"Four 170\u00b0C 15 min",allergens:["lactose", "oeufs"],ingredients:[{name:"Rhubarbe",qty:300,unit:"g",cat:"L\u00e9gumes"},{name:"Quinoa cuit",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"Ch\u00e8vre frais",qty:200,unit:"g",cat:"Cr\u00e9merie"},{name:"Parmesan r\u00e2p\u00e9",qty:60,unit:"g",cat:"Cr\u00e9merie"},{name:"Miel",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Cr\u00e8me l\u00e9g\u00e8re",qty:100,unit:"ml",cat:"Cr\u00e9merie"}]},
-      {id:"ete65",name:"Pissaladi\u00e8re d'aubergine et oignon",cat:"Quiches, Tartes & Clafoutis",desc:"Proven\u00e7ale revisit\u00e9e, aubergine fondante",time:"1h",emoji:"\ud83e\uded2",imageBase64:'',conservation:2,congel:"non",reheat:"Four 180\u00b0C 10 min",allergens:["gluten", "poisson"],ingredients:[{name:"P\u00e2te \u00e0 pain ou feuillet\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"Aubergine",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:6,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Filets d'anchois",qty:16,unit:"pi\u00e8ces",cat:"Viandes & Poissons"},{name:"Olives noires",qty:20,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:4,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Laurier",qty:2,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Sucre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"}]},
-      {id:"ete66",name:"Curry pois chiches-lait de coco",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"Doux, cr\u00e9meux, \u00e9pices douces",time:"25 min",emoji:"\ud83c\udf3f",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 10 min",allergens:[],ingredients:[{name:"Pois chiches cuits",qty:320,unit:"g",cat:"\u00c9picerie"},{name:"Lait de coco",qty:200,unit:"ml",cat:"\u00c9picerie"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Curry",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Curcuma",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Coriandre fra\u00eeche",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete67",name:"Ratatouille proven\u00e7ale confite",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"L\u00e9gumes confits, herbes du sud",time:"1h",emoji:"\ud83c\udf45",imageBase64:'',conservation:4,congel:"oui",reheat:"Casserole feu doux 10 min ou four 170\u00b0C 15 min",allergens:[],ingredients:[{name:"Courgette",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Aubergine",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron rouge",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Poivron jaune",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomate",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ail",qty:3,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:3,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Romarin",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Laurier",qty:2,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Basilic",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete68",name:"Courgettes farcies au quinoa",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"L\u00e9g\u00e8re, v\u00e9g\u00e9tale, color\u00e9e",time:"45 min",emoji:"\ud83e\udd52",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 180\u00b0C 15 min",allergens:["lactose"],ingredients:[{name:"Courgette ronde",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Quinoa cuit",qty:120,unit:"g",cat:"\u00c9picerie"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"F\u00e9ta",qty:60,unit:"g",cat:"Cr\u00e9merie"},{name:"Basilic",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Menthe fra\\u00eeche",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Parmesan r\u00e2p\u00e9",qty:40,unit:"g",cat:"Cr\u00e9merie"}]},
-      {id:"ete69",name:"Tian de l\u00e9gumes du soleil",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"Visuellement magnifique, saveurs confites",time:"1h",emoji:"\u2600\ufe0f",imageBase64:'',conservation:3,congel:"non",reheat:"Four 170\u00b0C 15 min",allergens:[],ingredients:[{name:"Courgette",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Aubergine",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Tomate",qty:6,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ail",qty:3,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:3,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Thym",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Romarin",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Origan",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Parmesan r\u00e2p\u00e9",qty:60,unit:"g",cat:"Cr\u00e9merie"}]},
-      {id:"ete70",name:"Galettes courgette-f\u00e9ta",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"Croustillantes, fra\u00eeches, ap\u00e9ro ou repas",time:"25 min",emoji:"\ud83e\udd52",imageBase64:'',conservation:2,congel:"oui",reheat:"Po\u00eale feu moyen 3 min chaque c\u00f4t\u00e9",allergens:["oeufs", "gluten", "lactose"],ingredients:[{name:"Courgette r\u00e2p\u00e9e",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"F\u00e9ta \u00e9miett\u00e9e",qty:120,unit:"g",cat:"Cr\u00e9merie"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Farine",qty:80,unit:"g",cat:"\u00c9picerie"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Menthe fra\u00eeche",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Aneth",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete71",name:"Caponata sicilienne",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"Aigre-douce, sicilienne authentique",time:"45 min",emoji:"\ud83c\udf46",imageBase64:'',conservation:4,congel:"non",reheat:"Se mange ti\u00e8de ou froide, po\u00eale feu doux 5 min",allergens:[],ingredients:[{name:"Aubergine",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Tomate",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"C\u00e9leri",qty:2,unit:"branches",cat:"L\u00e9gumes"},{name:"Oignon",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Olives vertes",qty:60,unit:"g",cat:"\u00c9picerie"},{name:"C\u00e2pres",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre de vin rouge",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Sucre",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:3,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Basilic",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Pignons de pin",qty:40,unit:"g",cat:"\u00c9picerie"}]},
-      {id:"ete72",name:"Houmous maison & l\u00e9gumes crudit\u00e9s",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"Cr\u00e9meux, citronn\u00e9, accompagnement frais",time:"10 min",emoji:"\ud83e\uded8",imageBase64:'',conservation:3,congel:"non",reheat:"Se mange froid, sortir 15 min du frigo",allergens:[],ingredients:[{name:"Pois chiches cuits",qty:240,unit:"g",cat:"\u00c9picerie"},{name:"Tahini",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Jus de citron",qty:2,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Cumin",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Eau froide",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Carotte",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Concombre",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Radis",qty:8,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Poivron",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"}]},
-      {id:"ete73",name:"Falafels croustillants sauce tahini",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"Croustillants dehors, moelleux dedans",time:"30 min",emoji:"\ud83e\uddc6",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 200\u00b0C 10 min pour retrouver le croustillant",allergens:[],ingredients:[{name:"Pois chiches secs tremp\u00e9s 24h",qty:200,unit:"g",cat:"\u00c9picerie"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:1,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Coriandre fra\u00eeche",qty:1,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Coriandre moulue",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Bicarbonate",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Tahini",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete74",name:"Falafels \u00e0 la carotte",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"Version color\u00e9e, l\u00e9g\u00e8rement sucr\u00e9e",time:"30 min",emoji:"\ud83e\udd55",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 200\u00b0C 10 min pour retrouver le croustillant",allergens:[],ingredients:[{name:"Pois chiches secs tremp\u00e9s 24h",qty:200,unit:"g",cat:"\u00c9picerie"},{name:"Carotte r\u00e2p\u00e9e",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:1,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Coriandre fra\u00eeche",qty:1,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Paprika",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Bicarbonate",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Yaourt grec",qty:160,unit:"g",cat:"Cr\u00e9merie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Menthe fra\u00eeche",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete75",name:"Feuilles de blettes farcies, lentille verte & riz",cat:"Vegan & V\u00e9g\u00e9tariens feel-good",desc:"Oriental, parfum\u00e9, d\u00e9licat",time:"50 min",emoji:"\ud83e\udd6c",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 10 min avec un fond d'eau citronn\u00e9e",allergens:[],ingredients:[{name:"Grandes feuilles de blettes",qty:8,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Lentilles vertes cuites",qty:120,unit:"g",cat:"\u00c9picerie"},{name:"Riz cuit",qty:100,unit:"g",cat:"\u00c9picerie"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Menthe fra\\u00eeche",qty:4,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Cannelle",qty:0.25,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Tomate",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete76",name:"Chakchouka estivale",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"Poivrons fondants, \u0153ufs poch\u00e9s, \u00e9pic\u00e9e",time:"25 min",emoji:"\ud83c\udf73",imageBase64:'',conservation:2,congel:"non",reheat:"Po\u00eale feu doux 5 min, ajouter \u0153ufs frais au r\u00e9chauffage",allergens:["oeufs"],ingredients:[{name:"\u0152ufs",qty:4,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Tomates m\u00fbres",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Poivron rouge",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Poivron vert",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Paprika doux",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Harissa",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Coriandre fra\u00eeche",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete77",name:"Brick au thon-fromage frais",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"Croustillante, fondante au c\u0153ur",time:"20 min",emoji:"\ud83e\udd50",imageBase64:'',conservation:1,congel:"non",reheat:"Four 200\u00b0C 8 min pour retrouver le croustillant",allergens:["gluten", "oeufs", "poisson"],ingredients:[{name:"Feuilles de brick",qty:4,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Thon en bo\u00eete",qty:160,unit:"g",cat:"Viandes & Poissons"},{name:"Fromage frais St M\u00f4ret",qty:80,unit:"g",cat:"Cr\u00e9merie"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Oignon",qty:0.25,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Harissa",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"}]},
-      {id:"ete78",name:"Salade mechouia poivrons-tomates",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"L\u00e9gumes grill\u00e9s, huile et herbes",time:"30 min",emoji:"\ud83e\uded9",imageBase64:'',conservation:3,congel:"non",reheat:"Se mange froide ou temp\u00e9r\u00e9e",allergens:[],ingredients:[{name:"Poivron rouge",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Tomate",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Piment vert doux",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Olives noires",qty:12,unit:"pi\u00e8ces",cat:"\u00c9picerie"}]},
-      {id:"ete79",name:"Salade de carottes cuites harissa-cumin",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"\u00c9pic\u00e9e, fondante, entr\u00e9e signature",time:"20 min",emoji:"\ud83e\udd55",imageBase64:'',conservation:3,congel:"non",reheat:"Se mange froide, sortir 10 min du frigo",allergens:[],ingredients:[{name:"Carotte",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Harissa",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Vinaigre de cidre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Olives",qty:8,unit:"pi\u00e8ces",cat:"\u00c9picerie"}]},
-      {id:"ete80",name:"Msemen du dimanche matin",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"Feuillet\u00e9, moelleux, tradition alg\u00e9rienne",time:"45 min",emoji:"\ud83e\uded3",imageBase64:'',conservation:2,congel:"oui",reheat:"Po\u00eale s\u00e8che feu moyen 2 min chaque c\u00f4t\u00e9",allergens:["gluten"],ingredients:[{name:"Farine",qty:400,unit:"g",cat:"\u00c9picerie"},{name:"Semoule fine",qty:100,unit:"g",cat:"\u00c9picerie"},{name:"Sel",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Sucre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Levure boulang\u00e8re",qty:1,unit:"sachet",cat:"\u00c9picerie"},{name:"Eau ti\u00e8de",qty:240,unit:"ml",cat:"\u00c9picerie"},{name:"Beurre fondu",qty:40,unit:"g",cat:"Cr\u00e9merie"},{name:"Huile neutre",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete81",name:"Salade concombre-tomates-citron confit",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"Fra\u00eeche, acidul\u00e9e, herbes du jardin",time:"15 min",emoji:"\ud83e\udd52",imageBase64:'',conservation:1,congel:"non",reheat:"Se mange froide",allergens:[],ingredients:[{name:"Concombre",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Tomate",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Citron confit",qty:0.5,unit:"pi\u00e8ce",cat:"\u00c9picerie"},{name:"Oignon rouge",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Menthe fra\u00eeche",qty:8,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Cumin",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete82",name:"Courgettes farcies fa\u00e7on Alg\u00e9rie",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"Viande \u00e9pic\u00e9e, riz, sauce tomate",time:"1h",emoji:"\ud83e\udd52",imageBase64:'',conservation:3,congel:"oui",reheat:"Casserole feu doux 15 min avec sauce tomate",allergens:[],ingredients:[{name:"Courgette",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"B\u0153uf hach\u00e9",qty:200,unit:"g",cat:"Viandes & Poissons"},{name:"Riz cru",qty:60,unit:"g",cat:"\u00c9picerie"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Coriandre",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Cannelle",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Concentr\u00e9 de tomate",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete83",name:"Salade aubergines grill\u00e9es chermoula",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"Grill\u00e9e, marin\u00e9e, herbes et \u00e9pices",time:"30 min",emoji:"\ud83c\udf46",imageBase64:'',conservation:3,congel:"non",reheat:"Se mange froide ou temp\u00e9r\u00e9e",allergens:[],ingredients:[{name:"Aubergine",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Ail",qty:3,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:1,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Coriandre",qty:1,unit:"bouquet",cat:"Herbes & \u00c9pices"},{name:"Cumin",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Paprika",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Harissa",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:3,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"}]},
-      {id:"ete84",name:"Salade de f\u00e8ves fra\u00eeches \u00e0 l'huile d'olive",cat:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",desc:"Simple, authentique, l\u00e9gumineuse de saison",time:"20 min",emoji:"\ud83e\uded8",imageBase64:'',conservation:2,congel:"non",reheat:"Se mange froide ou l\u00e9g\u00e8rement ti\u00e8de",allergens:[],ingredients:[{name:"F\u00e8ves fra\u00eeches \u00e9coss\u00e9es et pel\u00e9es",qty:400,unit:"g",cat:"L\u00e9gumes"},{name:"Ail",qty:2,unit:"gousses",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Menthe fra\u00eeche",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:4,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Cumin",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete85",name:"Nuggets de poulet maison & pur\u00e9e carottes-patate douce",cat:"Menu Enfants & Familles",desc:"Panure maison, pur\u00e9e douce color\u00e9e",time:"50 min",emoji:"\ud83d\udc14",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 180\u00b0C 12 min, pur\u00e9e \u00e0 part",allergens:["gluten", "oeufs", "lactose"],ingredients:[{name:"Blanc de poulet",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"\u0152ufs",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Chapelure",qty:100,unit:"g",cat:"\u00c9picerie"},{name:"Ail en poudre",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Carotte",qty:3,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Patate douce",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Lait",qty:80,unit:"ml",cat:"Cr\u00e9merie"},{name:"Beurre",qty:20,unit:"g",cat:"Cr\u00e9merie"}]},
-      {id:"ete86",name:"Mini-brochettes poulet-l\u00e9gumes",cat:"Menu Enfants & Familles",desc:"Color\u00e9es, marin\u00e9es, fun pour les enfants",time:"25 min",emoji:"\ud83c\udf62",imageBase64:'',conservation:2,congel:"oui",reheat:"Four 180\u00b0C 10 min",allergens:[],ingredients:[{name:"Blanc de poulet en cubes",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Poivron rouge",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Courgette",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Oignon rouge",qty:1,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 soupe",cat:"Fruits"},{name:"Origan",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Paprika doux",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete87",name:"P\u00e2tes estivales tomates cerises-basilic",cat:"Menu Enfants & Familles",desc:"Simple, color\u00e9es, saveur italienne",time:"20 min",emoji:"\ud83c\udf5d",imageBase64:'',conservation:2,congel:"non",reheat:"Po\u00eale feu doux 5 min avec un filet d'eau",allergens:["gluten", "lactose"],ingredients:[{name:"P\u00e2tes penne ou fusilli",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"Tomates cerises",qty:200,unit:"g",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Basilic",qty:12,unit:"feuilles",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Parmesan r\u00e2p\u00e9",qty:40,unit:"g",cat:"Cr\u00e9merie"},{name:"Beurre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Cr\u00e9merie"}]},
-      {id:"ete88",name:"Gratin de courgettes fromage fondu",cat:"Menu Enfants & Familles",desc:"Fondant, fromage filant, l\u00e9gumes cach\u00e9s",time:"40 min",emoji:"\ud83e\udd52",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 180\u00b0C 15 min",allergens:["lactose", "oeufs"],ingredients:[{name:"Courgette",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Gruy\u00e8re r\u00e2p\u00e9",qty:120,unit:"g",cat:"Cr\u00e9merie"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Cr\u00e8me l\u00e9g\u00e8re",qty:100,unit:"ml",cat:"Cr\u00e9merie"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Noix de muscade",qty:1,unit:"pinc\u00e9e",cat:"Herbes & \u00c9pices"},{name:"Thym",qty:2,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete89",name:"Pizza l\u00e9gumes soleil",cat:"Menu Enfants & Familles",desc:"Base tomate, l\u00e9gumes color\u00e9s, mozzarella",time:"25 min",emoji:"\ud83c\udf55",imageBase64:'',conservation:1,congel:"oui",reheat:"Four 200\u00b0C 8 min",allergens:["gluten", "lactose"],ingredients:[{name:"Base pizza individuelle",qty:2,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Coulis de tomate",qty:6,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Mozzarella",qty:240,unit:"g",cat:"Cr\u00e9merie"},{name:"Courgette",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Poivron",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomates cerises",qty:120,unit:"g",cat:"L\u00e9gumes"},{name:"Origan",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Basilic",qty:6,unit:"feuilles",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete90",name:"Mini-quiches thon-ma\u00efs",cat:"Menu Enfants & Familles",desc:"Individuelles, croustillantes, enfants adorent",time:"35 min",emoji:"\ud83e\udd67",imageBase64:'',conservation:3,congel:"oui",reheat:"Four 170\u00b0C 10 min",allergens:["gluten", "lactose", "oeufs", "poisson"],ingredients:[{name:"P\u00e2te bris\u00e9e",qty:1,unit:"rouleau",cat:"\u00c9picerie"},{name:"Thon en bo\u00eete",qty:120,unit:"g",cat:"Viandes & Poissons"},{name:"Ma\u00efs",qty:80,unit:"g",cat:"\u00c9picerie"},{name:"\u0152ufs",qty:4,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Cr\u00e8me fra\u00eeche",qty:160,unit:"ml",cat:"Cr\u00e9merie"},{name:"Lait",qty:60,unit:"ml",cat:"Cr\u00e9merie"},{name:"Gruy\u00e8re r\u00e2p\u00e9",qty:60,unit:"g",cat:"Cr\u00e9merie"},{name:"Ciboulette",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete91",name:"Wraps poulet-avocat",cat:"Menu Enfants & Familles",desc:"Frais, copieux, facile \u00e0 emporter",time:"20 min",emoji:"\ud83e\uded4",imageBase64:'',conservation:1,congel:"non",reheat:"Galette chauff\u00e9e \u00e0 la po\u00eale 2 min",allergens:["gluten", "lactose"],ingredients:[{name:"Galette de bl\u00e9",qty:4,unit:"pi\u00e8ces",cat:"\u00c9picerie"},{name:"Blanc de poulet grill\u00e9",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Avocat",qty:2,unit:"pi\u00e8ces",cat:"Fruits"},{name:"Laitue",qty:4,unit:"feuilles",cat:"L\u00e9gumes"},{name:"Tomate",qty:2,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Fromage frais",qty:2,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"},{name:"Jus de citron",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Fruits"},{name:"Paprika",qty:0.5,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete92",name:"Riz cantonnais l\u00e9ger",cat:"Menu Enfants & Familles",desc:"Wok maison, riz parfum\u00e9, l\u00e9gumes tendres",time:"15 min",emoji:"\ud83c\udf73",imageBase64:'',conservation:2,congel:"non",reheat:"Wok feu vif 5 min",allergens:["oeufs"],ingredients:[{name:"Riz cuit de la veille",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Petits pois",qty:80,unit:"g",cat:"L\u00e9gumes"},{name:"Jambon blanc en d\u00e9s",qty:80,unit:"g",cat:"Viandes & Poissons"},{name:"Oignon nouveau",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Sauce soja",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile de s\u00e9same",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete93",name:"Salade de p\u00e2tes jambon-ma\u00efs",cat:"Menu Enfants & Familles",desc:"Fra\u00eeche, color\u00e9e, repas facile",time:"20 min",emoji:"\ud83c\udf5d",imageBase64:'',conservation:2,congel:"non",reheat:"Se mange froide",allergens:["gluten"],ingredients:[{name:"P\u00e2tes farfalle cuites",qty:160,unit:"g",cat:"\u00c9picerie"},{name:"Jambon blanc en d\u00e9s",qty:100,unit:"g",cat:"Viandes & Poissons"},{name:"Ma\u00efs",qty:80,unit:"g",cat:"\u00c9picerie"},{name:"Concombre",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Tomates cerises",qty:6,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Mayonnaise l\u00e9g\u00e8re",qty:2,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Yaourt",qty:2,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"},{name:"Ciboulette",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"}]},
-      {id:"ete94",name:"Galettes poulet-fromage",cat:"Menu Enfants & Familles",desc:"Moelleuses, dor\u00e9es, go\u00fbt fromager",time:"25 min",emoji:"\ud83c\udf57",imageBase64:'',conservation:2,congel:"oui",reheat:"Po\u00eale feu moyen 3 min chaque c\u00f4t\u00e9",allergens:["gluten", "oeufs", "lactose"],ingredients:[{name:"Blanc de poulet hach\u00e9",qty:240,unit:"g",cat:"Viandes & Poissons"},{name:"Fromage r\u00e2p\u00e9",qty:80,unit:"g",cat:"Cr\u00e9merie"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Farine",qty:60,unit:"g",cat:"\u00c9picerie"},{name:"Oignon r\u00e2p\u00e9",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Persil",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Huile neutre",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"}]},
-      {id:"ete95",name:"Velout\u00e9 froid carotte-orange",cat:"Menu Enfants & Familles",desc:"Doux, vitamin\u00e9, couleur app\u00e9tissante",time:"30 min",emoji:"\ud83e\udd55",imageBase64:'',conservation:2,congel:"non",reheat:"Se sert froid, mixer avant de servir",allergens:["lactose"],ingredients:[{name:"Carotte",qty:4,unit:"pi\u00e8ces",cat:"L\u00e9gumes"},{name:"Orange",qty:1,unit:"pi\u00e8ce",cat:"Fruits"},{name:"Oignon",qty:0.5,unit:"pi\u00e8ce",cat:"L\u00e9gumes"},{name:"Ail",qty:1,unit:"gousses",cat:"L\u00e9gumes"},{name:"Bouillon de l\u00e9gumes",qty:300,unit:"ml",cat:"\u00c9picerie"},{name:"Huile d'olive",qty:1,unit:"c. \u00e0 soupe",cat:"\u00c9picerie"},{name:"Gingembre",qty:1,unit:"c. \u00e0 caf\u00e9",cat:"Herbes & \u00c9pices"},{name:"Coriandre fra\u00eeche",qty:4,unit:"branches",cat:"Herbes & \u00c9pices"},{name:"Cr\u00e8me l\u00e9g\u00e8re",qty:2,unit:"c. \u00e0 soupe",cat:"Cr\u00e9merie"}]},
-      {id:"ete96",name:"Dos de cabillaud pan\u00e9 maison & pur\u00e9e maison",cat:"Menu Enfants & Familles",desc:"Panure croustillante l\u00e9g\u00e8re, pur\u00e9e onctueuse",time:"40 min",emoji:"\ud83d\udc1f",imageBase64:'',conservation:2,congel:"non",reheat:"Four 170\u00b0C 10 min pour le poisson, pur\u00e9e \u00e0 part",allergens:["gluten", "oeufs", "poisson", "lactose"],ingredients:[{name:"Dos de cabillaud",qty:300,unit:"g",cat:"Viandes & Poissons"},{name:"\u0152uf",qty:2,unit:"pi\u00e8ces",cat:"Cr\u00e9merie"},{name:"Chapelure",qty:80,unit:"g",cat:"\u00c9picerie"},{name:"Pomme de terre",qty:500,unit:"g",cat:"L\u00e9gumes"},{name:"Beurre",qty:40,unit:"g",cat:"Cr\u00e9merie"},{name:"Lait",qty:100,unit:"ml",cat:"Cr\u00e9merie"}]}
-    ];
-    STATE.categories=[
-      {id:"cat-ete01",name:"Plats Signature Cook'sUP",emoji:"\u2728",dishIds:["sig-ete01", "sig-ete02", "sig-ete03", "sig-ete04", "sig-ete05", "sig-ete06"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete02",name:"Les Incontournables",emoji:"\ud83c\udf72",dishIds:["ete01", "ete02", "ete03", "ete04", "ete05", "ete06", "ete07", "ete08", "ete09", "ete10", "ete11", "ete12"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete03",name:"Salades repas & Bowls g\u00e9n\u00e9reux",emoji:"\ud83e\udd57",dishIds:["ete13", "ete14", "ete15", "ete16", "ete17", "ete18", "ete19", "ete20", "ete21", "ete22", "ete23", "ete24", "ete25"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete04",name:"Soupes froides & Gaspachos",emoji:"\ud83c\udf79",dishIds:["ete26", "ete27", "ete28", "ete29", "ete30", "ete31"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete05",name:"Poissons & Fruits de mer l\u00e9gers",emoji:"\ud83d\udc1f",dishIds:["ete32", "ete33", "ete34", "ete35", "ete36", "ete37", "ete38", "ete39", "ete40", "ete41"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete06",name:"S\u00e9lection Gourmande",emoji:"\ud83c\udf7d\ufe0f",dishIds:["ete42", "ete43", "ete44", "ete45", "ete46", "ete47", "ete48", "ete49", "ete50", "ete51", "ete52", "ete53", "ete54", "ete55"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete07",name:"Quiches, Tartes & Clafoutis",emoji:"\ud83e\udd67",dishIds:["ete56", "ete57", "ete58", "ete59", "ete60", "ete61", "ete62", "ete63", "ete64", "ete65"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete08",name:"Vegan & V\u00e9g\u00e9tariens feel-good",emoji:"\ud83c\udf3f",dishIds:["ete66", "ete67", "ete68", "ete69", "ete70", "ete71", "ete72", "ete73", "ete74", "ete75"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete09",name:"Sp\u00e9cialit\u00e9s Alg\u00e9riennes d'\u00e9t\u00e9",emoji:"\ud83e\uded9",dishIds:["ete76", "ete77", "ete78", "ete79", "ete80", "ete81", "ete82", "ete83", "ete84"],published:true,createdAt:new Date().toISOString()},
-      {id:"cat-ete10",name:"Menu Enfants & Familles",emoji:"\ud83e\uddd2",dishIds:["ete85", "ete86", "ete87", "ete88", "ete89", "ete90", "ete91", "ete92", "ete93", "ete94", "ete95", "ete96"],published:true,createdAt:new Date().toISOString()}
-    ];
-    try { await save.dishes(); } catch(e){ console.warn('save.dishes failed', e); }
-    try { await save.categories(); } catch(e){ console.warn('save.categories failed', e); }
-    try { await setShared('menuVersion',MENU_VERSION); } catch(e){ console.warn('menuVersion save failed', e); }
-    console.info('[CooksUP] ✅ Carte Été 2026 chargée — 102 plats, 10 catégories');
-
-  } else if(STATE.dishes.length === 0) {
-    // Version OK mais dishes vides (loadState a timeout) — récupération
-    console.warn('[CooksUP] Dishes vides malgré version OK — récupération...');
-    try {
+  // ── Chargement des recettes depuis la base normalisée Supabase ──
+  // (tables dishes / recipe_ingredients / recipe_allergens / recipe_conservation)
+  // Remplace l'ancien système de carte figée dans le code + archivage automatique.
+  try {
+    const fresh = await loadDishesFromSupabaseDirect();
+    if(fresh && fresh.dishes.length){
+      STATE.dishes = fresh.dishes;
+      STATE.categories = fresh.categories;
+      try { await save.dishes(); } catch(e){ console.warn('save.dishes failed', e); }
+      try { await save.categories(); } catch(e){ console.warn('save.categories failed', e); }
+      console.info('[CooksUP] ✅ Carte chargée depuis Supabase —', STATE.dishes.length, 'plats,', STATE.categories.length, 'catégories');
+    } else if(STATE.dishes.length === 0){
+      // Supabase inaccessible ET pas de cache local : dernier recours via getShared
+      console.warn('[CooksUP] Chargement direct Supabase échoué — tentative via cache app_data');
       const freshDishes = await getShared('dishes');
       const freshCats   = await getShared('categories');
       if(freshDishes && freshDishes.length > 0){
         STATE.dishes = freshDishes;
         if(freshCats && freshCats.length > 0) STATE.categories = freshCats;
-        console.info('[CooksUP] Dishes récupérés depuis Supabase:', STATE.dishes.length);
+        console.info('[CooksUP] Dishes récupérés depuis le cache app_data:', STATE.dishes.length);
       } else {
-        // Supabase vraiment vide — forcer rechargement complet au prochain boot
-        console.warn('[CooksUP] Supabase vide — reset version pour rechargement');
-        try { await setShared('menuVersion', null); } catch(e){}
-        setTimeout(() => window.location.reload(), 500);
-        return;
+        console.warn('[CooksUP] Aucune recette disponible (ni Supabase ni cache).');
       }
-    } catch(e) {
-      console.warn('[CooksUP] Récupération dishes échouée:', e);
+    } else {
+      console.info('[CooksUP] Supabase inaccessible — carte en cache conservée (', STATE.dishes.length, 'plats)');
     }
+  } catch(e) {
+    console.warn('[CooksUP] Erreur chargement recettes Supabase:', e);
   }
-
-  // Initialiser archives si vide
-  if(!STATE.archives) STATE.archives=[];
 }
 
 // ══════════════════════════════════════════════
@@ -3427,7 +3410,7 @@ async function doRegister(){
   if(pwd.length<6){showMsg('register-msg','Mot de passe trop court (6 caractères min).');return;}
   if(STATE.users.find(u=>u.email===email)){showMsg('register-msg','Cet email est déjà utilisé.');return;}
   showMsg('register-msg','Enregistrement en cours…','info');
-  const user={id:'u_'+Date.now(),email,password:pwd,name,role:'client',createdAt:new Date().toISOString(),defaultPersons:2,status:'pending'};
+  const user={id:'u_'+Date.now(),email,password:pwd,name,role:'client',createdAt:new Date().toISOString(),defaultAdults:2,defaultChildren:0,status:'pending'};
   STATE.users.push(user);
   try{
     await save.users();
@@ -3467,8 +3450,10 @@ function loginUser(user){
     document.getElementById('navb-admin').textContent='⚙ Admin';
     document.querySelector('.nav-logo').addEventListener('click',()=>showPage('admin'));
   }
-  persons=user.defaultPersons||2;
-  document.getElementById('persons-display').textContent=persons;
+  nbAdults=user.defaultAdults||user.defaultPersons||2;
+  nbChildren=user.defaultChildren||0;
+  document.getElementById('adults-display').textContent=nbAdults;
+  document.getElementById('children-display').textContent=nbChildren;
   if(user.role==='client'){
     renderMenu();checkMenuNotif();
     showWelcomeBanner();
@@ -3600,8 +3585,41 @@ function tryNotifyByEmail(subject,body){
 // ══════════════════════════════════════════════
 //  PERSONS
 // ══════════════════════════════════════════════
-let persons=2;
-function changePersons(d){persons=Math.max(1,Math.min(12,persons+d));document.getElementById('persons-display').textContent=persons;updateSelectedUI(getSelections());}
+let nbAdults=2, nbChildren=0;
+// 'persons' conservé en lecture seule pour compat affichage (= adultes + enfants)
+function totalPersons(){ return nbAdults+nbChildren; }
+function changeAdults(d){nbAdults=Math.max(1,Math.min(12,nbAdults+d));document.getElementById('adults-display').textContent=nbAdults;updateSelectedUI(getSelections());}
+function changeChildren(d){nbChildren=Math.max(0,Math.min(12,nbChildren+d));document.getElementById('children-display').textContent=nbChildren;updateSelectedUI(getSelections());}
+
+// ── Calcul de quantité pour un ingrédient selon le foyer (adultes + enfants 7-11 ans) ──
+// ing: {type:'scalable'|'fixe', unit, qtyAdult, qtyChild, palier}
+// Retourne la quantité BRUTE (non arrondie) à ce stade — l'arrondi final se fait
+// après agrégation entre plusieurs plats pour éviter les erreurs d'arrondi cumulées.
+function computeIngRaw(ing, adults, children){
+  if(ing.type==='fixe'){
+    if(ing.qtyAdult===null||ing.qtyAdult===undefined) return null; // épice/condiment "au besoin", pas de quantité
+    const total=adults+children;
+    const palier=ing.palier||99;
+    const blocks=Math.max(1,Math.ceil(total/palier));
+    return ing.qtyAdult*blocks;
+  }
+  // scalable
+  return (ing.qtyAdult||0)*adults + (ing.qtyChild||0)*children;
+}
+// Arrondi final à appliquer après agrégation (jamais de décimale pour les ingrédients comptés à la pièce)
+function roundFinalQty(rawQty, unit){
+  if(rawQty===null||rawQty===undefined) return null;
+  if(unit==='pièce') return Math.ceil(rawQty - 1e-9);
+  return Math.round(rawQty*10)/10; // g/ml/etc: 1 décimale max
+}
+// Affichage informatif d'un ingrédient dans la fiche d'un plat (hors calcul agrégé)
+function ingDisplayQty(ing){
+  if(ing.type==='fixe'){
+    if(ing.qtyAdult===null||ing.qtyAdult===undefined) return 'au besoin';
+    return ing.qtyAdult+' '+(ing.unit||'pièce')+(ing.qtyAdult>1?'s':'');
+  }
+  return ing.qtyAdult+' '+(ing.unit||'')+' /adulte';
+}
 
 // ══════════════════════════════════════════════
 //  SELECTIONS
@@ -3629,7 +3647,7 @@ function openSelectionModal(){
 
     // Sous-titre
     const sub = document.getElementById('modal-sel-subtitle');
-    if(sub) sub.textContent = selectedDishes.length + ' plat'+(selectedDishes.length>1?'s':'')+' · '+persons+' personne'+(persons>1?'s':'');
+    if(sub) sub.textContent = selectedDishes.length + ' plat'+(selectedDishes.length>1?'s':'')+' · '+nbAdults+' adulte'+(nbAdults>1?'s':'')+(nbChildren>0?' + '+nbChildren+' enfant'+(nbChildren>1?'s':''):'');
 
     // Corps
     const body = document.getElementById('modal-sel-body');
@@ -3681,10 +3699,12 @@ async function confirmSelection(){
   // Marquer la sélection comme confirmée
   if(!STATE.selections[currentUser.id]) STATE.selections[currentUser.id]={};
   STATE.selections[currentUser.id].confirmedAt = new Date().toISOString();
-  STATE.selections[currentUser.id].confirmedPersons = persons;
+  STATE.selections[currentUser.id].confirmedPersons = totalPersons();
+  STATE.selections[currentUser.id].confirmedAdults = nbAdults;
+  STATE.selections[currentUser.id].confirmedChildren = nbChildren;
   await save.selections();
   // Envoyer la notification à Imene
-  emailAdminSelection(currentUser, sel.length, persons);
+  emailAdminSelection(currentUser, sel.length, nbAdults, nbChildren);
   // Feedback visuel
   const btn = document.getElementById('confirmer-btn');
   if(btn){
@@ -3724,63 +3744,12 @@ function updateSelectedUI(sel){
 // ══════════════════════════════════════════════
 //  ARCHIVES MENSUELLES
 // ══════════════════════════════════════════════
-let activeMonthId='current';
 
-function getActiveDishes(){
-  if(activeMonthId==='current') return STATE.dishes;
-  const arc=STATE.archives.find(a=>a.id===activeMonthId);
-  return arc?arc.dishes:STATE.dishes;
-}
+function getActiveDishes(){ return STATE.dishes; }
 
-function getActiveCategories(){
-  if(activeMonthId==='current') return STATE.categories;
-  const arc=STATE.archives.find(a=>a.id===activeMonthId);
-  return arc?arc.categories:STATE.categories;
-}
+function getActiveCategories(){ return STATE.categories; }
 
-function getAllDishes(){
-  // Toutes les dishes : current + toutes les archives (pour buildList)
-  const all=[...STATE.dishes];
-  STATE.archives.forEach(arc=>{
-    arc.dishes.forEach(d=>{
-      if(!all.find(x=>x.id===d.id)) all.push(d);
-    });
-  });
-  return all;
-}
-
-function switchMonth(monthId){
-  activeMonthId=monthId;
-  renderMenu();
-  const banner=document.getElementById('archive-banner');
-  if(banner){
-    if(monthId==='current'){
-      banner.style.display='none';
-    } else {
-      const arc=STATE.archives.find(a=>a.id===monthId);
-      banner.textContent='📂 Vous consultez les archives : '+( arc?.label||monthId)+' — Vous pouvez sélectionner des plats de ce mois.';
-      banner.style.display='block';
-    }
-  }
-}
-
-function populateMonthSelector(){
-  const sel=document.getElementById('month-selector');
-  if(!sel)return;
-  // Supprimer les options archive existantes
-  [...sel.options].forEach(o=>{ if(o.value!=='current') o.remove(); });
-  // Ajouter les archives disponibles
-  STATE.archives.forEach(arc=>{
-    const opt=document.createElement('option');
-    opt.value=arc.id;
-    opt.textContent=arc.emoji+' '+arc.label+' — Archive';
-    sel.appendChild(opt);
-  });
-  // Restaurer la valeur active
-  sel.value=activeMonthId;
-}
-
-
+function getAllDishes(){ return STATE.dishes; }
 
 function switchMenuTab(catId){
   document.querySelectorAll('.menu-tab').forEach(t=>t.classList.remove('active'));
@@ -3794,10 +3763,9 @@ function switchMenuTab(catId){
 function renderMenu(){
   const sel=getSelections();
   const area=document.getElementById('menu-categories-area');
-  populateMonthSelector();
   const activeDishes=getActiveDishes();
   const activeCats=getActiveCategories();
-  const pubCats=activeMonthId==='current'?activeCats.filter(c=>c.published):activeCats;
+  const pubCats=activeCats.filter(c=>c.published);
   if(!pubCats.length){area.innerHTML='<div class="no-content"><h3>Aucun menu disponible</h3><p>Revenez bientôt !</p></div>';return;}
   // Bande d'onglets
   let tabsHtml=`<div class="menu-tabs-wrap"><div class="menu-tabs">`;
@@ -3831,7 +3799,7 @@ function renderMenu(){
       const ingsHtml = dish.ingredients.map((ing,i)=>`
         <div class="dish-ing-row">
           <span class="ing-name">${ing.name}</span>
-          <span class="ing-qty">${ing.qty} ${ing.unit}</span>
+          <span class="ing-qty">${ingDisplayQty(ing)}</span>
           <button class="ing-del" onclick="event.stopPropagation();removeClientIng('${dish.id}',${i})" title="Retirer">✕</button>
         </div>`).join('');
       html+=`<div class="dish-card ${selected?'selected':''}${hasAlert?' has-alert':''}" data-id="${dish.id}">
@@ -3933,18 +3901,24 @@ function buildList(){
   const sel=getSelections();
   const dishes=getAllDishes().filter(d=>sel.includes(d.id));
   if(!dishes.length)return null;
-  const map={};
+  const map={}; // ingrédients quantifiés (scalable ou fixe avec quantité)
+  const noQtySet={}; // ingrédients "au besoin" (épices, condiments) — dédupliqués, sans quantité
   dishes.forEach(d=>d.ingredients.forEach(ing=>{
     const normName=normalizeIngName(ing.name);
+    const raw=computeIngRaw(ing,nbAdults,nbChildren);
+    if(raw===null){
+      // épice / condiment sans quantité : juste listé une fois
+      const nk=normName.toLowerCase();
+      if(!noQtySet[nk]) noQtySet[nk]={name:normName,cat:ing.cat||'Autre'};
+      return;
+    }
     const normUnit=normalizeUnit(ing.unit);
-    // Clé : nom normalisé + unité normalisée (PAS la catégorie pour éviter les doublons)
     const k=normName.toLowerCase()+'||'+normUnit;
     if(!map[k]){
-      map[k]={name:normName,unit:normUnit,cat:ing.cat||'Autre',qty2p:0};
+      map[k]={name:normName,unit:normUnit,cat:ing.cat||'Autre',rawQty:0};
     }
-    map[k].qty2p+=ing.qty;
+    map[k].rawQty+=raw;
   }));
-  const factor=persons/2;
   const byCategory={};
   Object.values(map).forEach(ing=>{
     const cat=ing.cat||'Autre';
@@ -3952,10 +3926,15 @@ function buildList(){
     byCategory[cat].push({
       name:ing.name,
       unit:ing.unit,
-      qty:parseFloat((ing.qty2p*factor).toFixed(2))
+      qty:roundFinalQty(ing.rawQty,ing.unit)
     });
   });
-  return{byCategory,dishes,persons};
+  Object.values(noQtySet).forEach(ing=>{
+    const cat=ing.cat||'Autre';
+    if(!byCategory[cat])byCategory[cat]=[];
+    byCategory[cat].push({name:ing.name,unit:'',qty:null});
+  });
+  return{byCategory,dishes,persons:totalPersons(),nbAdults,nbChildren};
 }
 
 function renderListe(){
@@ -3965,7 +3944,7 @@ function renderListe(){
   const headerInfo=document.getElementById('liste-header-info');
   if(!data){content.innerHTML='<div class="no-content"><h3>Aucun plat sélectionné</h3><p>Choisissez vos plats dans <a onclick="showPage(\'menu\')" style="color:var(--sage-deep);cursor:pointer;">la page Menus</a></p></div>';summary.innerHTML='';headerInfo.innerHTML='';return;}
   const today=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-  headerInfo.innerHTML=`Pour ${data.persons} pers.<br>${today}<br><strong style="color:var(--sage-deep)">${data.dishes.length} plat${data.dishes.length>1?'s':''}</strong>`;
+  headerInfo.innerHTML=`Pour ${data.nbAdults} adulte${data.nbAdults>1?'s':''}${data.nbChildren>0?' + '+data.nbChildren+' enfant'+(data.nbChildren>1?'s':''):''}<br>${today}<br><strong style="color:var(--sage-deep)">${data.dishes.length} plat${data.dishes.length>1?'s':''}</strong>`;
   const totalIng=Object.values(data.byCategory).reduce((a,c)=>a+c.length,0);
   summary.innerHTML=`<div class="summary-card"><div class="summary-num">${data.dishes.length}</div><div class="summary-lbl">Plats</div></div><div class="summary-card"><div class="summary-num">${totalIng}</div><div class="summary-lbl">Ingrédients</div></div><div class="summary-card"><div class="summary-num">${data.persons}</div><div class="summary-lbl">Pers.</div></div>`;
   const cats=CAT_ORDER.filter(c=>data.byCategory[c]).concat(Object.keys(data.byCategory).filter(c=>!CAT_ORDER.includes(c)));
@@ -3974,8 +3953,8 @@ function renderListe(){
     html+=`<div class="liste-cat-block"><div class="liste-cat-title">${cat}</div>`;
     data.byCategory[cat].sort((a,b)=>a.name.localeCompare(b.name)).forEach((ing,i)=>{
       const cid=`chk-${cat.replace(/[\s&\/]/g,'')}-${i}`;
-      const qty=Number.isInteger(ing.qty)?ing.qty:ing.qty.toFixed(1).replace('.0','');
-      html+=`<div class="liste-item"><div class="liste-check" id="${cid}" onclick="toggleCheck('${cid}','n${cid}')"></div><span class="liste-ing-name" id="n${cid}">${ing.name}</span><span class="liste-ing-qty">${qty} ${ing.unit}</span></div>`;
+      const qtyLabel=(ing.qty===null||ing.qty===undefined)?'à avoir':(Number.isInteger(ing.qty)?ing.qty+' '+ing.unit:ing.qty.toFixed(1).replace('.0','')+' '+ing.unit);
+      html+=`<div class="liste-item"><div class="liste-check" id="${cid}" onclick="toggleCheck('${cid}','n${cid}')"></div><span class="liste-ing-name" id="n${cid}">${ing.name}</span><span class="liste-ing-qty">${qtyLabel}</span></div>`;
     });
     html+='</div>';
   });
@@ -4023,6 +4002,7 @@ function exportConservationJPG(){
   sorted.forEach(function(dish,i){
     const cons=dish.conservation||4;
     const congel=dish.congel||'non';
+    const freezeStatus=dish.freezeStatus||(congel==='oui'?'Recommandée':'Déconseillée');
     const reheat=dish.reheat||'Réchauffer à feu doux ou au micro-ondes.';
     const eatDate=new Date(today);
     eatDate.setDate(today.getDate()+Math.floor(i*(cons/dishes.length)));
@@ -4037,7 +4017,7 @@ function exportConservationJPG(){
       +'<div style="font-size:.78rem;color:#3A3830;line-height:1.9;">'
       +'<div>📅 <strong>Consommer :</strong> '+dayLabel+'</div>'
       +'<div>🕐 <strong>Conservation :</strong> '+cons+' jour'+(cons>1?'s':'')+' au frigo</div>'
-      +'<div>❄️ <strong>Congélation :</strong> '+(congel==='oui'?'Possible':'Non recommandée')+'</div>'
+      +'<div>❄️ <strong>Congélation :</strong> '+freezeStatus+'</div>'
       +'<div>🔥 <strong>Réchauffage :</strong> '+reheat+'</div>'
       +'</div></div>';
   });
@@ -4066,13 +4046,14 @@ function exportConservationJPG(){
 
 function shareWhatsApp(){
   const data=buildList(); if(!data){showToast('Aucun plat sélectionné','error');return;}
-  let text=`🛒 *Liste de courses Cook'sUP*\nPour ${data.persons} personne${data.persons>1?'s':''} — ${data.dishes.length} plat${data.dishes.length>1?'s':''}\n\n`;
+  const foyerTxt=`${data.nbAdults} adulte${data.nbAdults>1?'s':''}`+(data.nbChildren>0?` + ${data.nbChildren} enfant${data.nbChildren>1?'s':''}`:'');
+  let text=`🛒 *Liste de courses Cook'sUP*\nPour ${foyerTxt} — ${data.dishes.length} plat${data.dishes.length>1?'s':''}\n\n`;
   const cats=CAT_ORDER.filter(c=>data.byCategory[c]).concat(Object.keys(data.byCategory).filter(c=>!CAT_ORDER.includes(c)));
   cats.forEach(cat=>{
     text+=`*${cat}*\n`;
     data.byCategory[cat].sort((a,b)=>a.name.localeCompare(b.name)).forEach(ing=>{
-      const q=Number.isInteger(ing.qty)?ing.qty:ing.qty.toFixed(1).replace('.0','');
-      text+=`• ${ing.name} — ${q} ${ing.unit}\n`;
+      const q=(ing.qty===null||ing.qty===undefined)?'à avoir':(Number.isInteger(ing.qty)?ing.qty+' '+ing.unit:ing.qty.toFixed(1).replace('.0','')+' '+ing.unit);
+      text+=`• ${ing.name} — ${q}\n`;
     });
     text+='\n';
   });
@@ -4201,7 +4182,7 @@ function markMessagesRead(){
 // ══════════════════════════════════════════════
 //  PROFIL
 // ══════════════════════════════════════════════
-let profP=2;
+let profAdults=2, profChildren=0;
 
 function renderProfil(){
   if(!currentUser)return;
@@ -4214,7 +4195,9 @@ function renderProfil(){
   const heroEmail=document.getElementById('profil-hero-email');
   if(heroEmail) heroEmail.textContent=currentUser.email;
   const heroPersons=document.getElementById('profil-hero-persons');
-  if(heroPersons) heroPersons.textContent=(currentUser.defaultPersons||2)+' personne'+(( currentUser.defaultPersons||2)>1?'s':'');
+  const hAdults=currentUser.defaultAdults||currentUser.defaultPersons||2;
+  const hChildren=currentUser.defaultChildren||0;
+  if(heroPersons) heroPersons.textContent=hAdults+' adulte'+(hAdults>1?'s':'')+(hChildren>0?' + '+hChildren+' enfant'+(hChildren>1?'s':''):'');
   // Onglet infos
   document.getElementById('profil-avatar-big').textContent=initial;
   document.getElementById('profil-name-disp').textContent=currentUser.name;
@@ -4223,12 +4206,15 @@ function renderProfil(){
   document.getElementById('profil-email').value=currentUser.email;
   // Reset sur l'onglet infos par défaut
   switchProfilTab('infos', document.querySelector('.ptab-btn'));
-  profP=currentUser.defaultPersons||2;
-  document.getElementById('profil-persons-n').textContent=profP;
+  profAdults=currentUser.defaultAdults||currentUser.defaultPersons||2;
+  profChildren=currentUser.defaultChildren||0;
+  document.getElementById('profil-adults-n').textContent=profAdults;
+  document.getElementById('profil-children-n').textContent=profChildren;
   ['pp-old','pp-new','pp-confirm'].forEach(id=>document.getElementById(id).value='');
 }
 
-function changeProfP(d){profP=Math.max(1,Math.min(12,profP+d));document.getElementById('profil-persons-n').textContent=profP;}
+function changeProfAdults(d){profAdults=Math.max(1,Math.min(12,profAdults+d));document.getElementById('profil-adults-n').textContent=profAdults;}
+function changeProfChildren(d){profChildren=Math.max(0,Math.min(12,profChildren+d));document.getElementById('profil-children-n').textContent=profChildren;}
 
 async function saveProfilInfo(){
   const name=document.getElementById('profil-name').value.trim();
@@ -4236,10 +4222,12 @@ async function saveProfilInfo(){
   if(!name||!email){showMsg('profil-info-msg','Remplissez tous les champs.');return;}
   if(STATE.users.find(u=>u.email===email&&u.id!==currentUser.id)){showMsg('profil-info-msg','Email déjà utilisé.');return;}
   const idx=STATE.users.findIndex(u=>u.id===currentUser.id);
-  STATE.users[idx]={...STATE.users[idx],name,email,defaultPersons:profP};
+  STATE.users[idx]={...STATE.users[idx],name,email,defaultAdults:profAdults,defaultChildren:profChildren};
   currentUser=STATE.users[idx];
   await save.users();
-  persons=profP; document.getElementById('persons-display').textContent=persons;
+  nbAdults=profAdults; nbChildren=profChildren;
+  document.getElementById('adults-display').textContent=nbAdults;
+  document.getElementById('children-display').textContent=nbChildren;
   document.getElementById('nav-name').textContent=name.split(' ')[0];
   document.getElementById('nav-avatar').textContent=name.charAt(0).toUpperCase();
   renderProfil();
@@ -4326,7 +4314,7 @@ function renderIngRows(){
 async function saveDish(){
   const name=document.getElementById('dish-name').value.trim();
   if(!name){showMsg('add-dish-msg','Entrez un nom.');return;}
-  const ingredients=editIngRows.filter(r=>r.name.trim()).map(r=>({name:r.name.trim(),qty:parseFloat(r.qty)||0,unit:r.unit,cat:r.cat}));
+  const ingredients=editIngRows.filter(r=>r.name.trim()).map(r=>({name:r.name.trim(),type:'scalable',qtyAdult:parseFloat(r.qty)||0,qtyChild:parseFloat(r.qty)||0,unit:r.unit,palier:null,cat:r.cat}));
   if(!ingredients.length){showMsg('add-dish-msg','Ajoutez au moins un ingrédient.');return;}
   const conservation=parseInt(document.getElementById('dish-conservation')?.value)||4;
   const congel=document.getElementById('dish-congel')?.value||'non';
@@ -4368,7 +4356,7 @@ function openEditDish(id){
   const hint=document.getElementById('edit-dish-img-hint');
   if(d.imageBase64){prev.src=d.imageBase64;prev.style.display='block';hint.style.display='none';document.getElementById('edit-dish-img-area').classList.add('has-img');}
   else{prev.style.display='none';hint.style.display='';document.getElementById('edit-dish-img-area').classList.remove('has-img');}
-  editIngRowsEdit=d.ingredients.map(i=>({...i}));
+  editIngRowsEdit=d.ingredients.map(i=>({...i,qty:(i.qtyAdult!==undefined?i.qtyAdult:i.qty)}));
   renderEditIngRows();
   document.getElementById('edit-dish-msg').className='auth-msg';
   openModal('modal-edit-dish');
@@ -4392,7 +4380,7 @@ async function saveEditDish(){
   const id=document.getElementById('edit-dish-id').value;
   const name=document.getElementById('edit-dish-name').value.trim();
   if(!name){showMsg('edit-dish-msg','Entrez un nom.');return;}
-  const ingredients=editIngRowsEdit.filter(r=>r.name.trim()).map(r=>({name:r.name.trim(),qty:parseFloat(r.qty)||0,unit:r.unit,cat:r.cat}));
+  const ingredients=editIngRowsEdit.filter(r=>r.name.trim()).map(r=>({name:r.name.trim(),type:r.type||'scalable',qtyAdult:r.type==='fixe'?(parseFloat(r.qty)||0):(parseFloat(r.qty)||0),qtyChild:r.type==='fixe'?undefined:(parseFloat(r.qty)||0),unit:r.unit,palier:r.palier||null,cat:r.cat}));
   if(!ingredients.length){showMsg('edit-dish-msg','Ajoutez au moins un ingrédient.');return;}
   const idx=STATE.dishes.findIndex(d=>d.id===id); if(idx<0)return;
   const imgB64=document.getElementById('edit-dish-img-b64').value||pendingEditDishImg;
@@ -4685,7 +4673,7 @@ function openClientDetail(userId){
       <div class="admin-card" style="padding:16px;">
         <div style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--terracotta);margin-bottom:8px;">Compte</div>
         <div style="font-size:.85rem;color:var(--text);margin-bottom:4px;">Inscrit le <strong>${new Date(u.createdAt).toLocaleDateString('fr-FR')}</strong></div>
-        <div style="font-size:.85rem;color:var(--text);margin-bottom:4px;">Personnes : <strong>${u.defaultPersons||2}</strong></div>
+        <div style="font-size:.85rem;color:var(--text);margin-bottom:4px;">Foyer : <strong>${u.defaultAdults||u.defaultPersons||2} adulte${(u.defaultAdults||u.defaultPersons||2)>1?'s':''}${(u.defaultChildren||0)>0?' + '+(u.defaultChildren||0)+' enfant'+(u.defaultChildren>1?'s':''):''}</strong></div>
         <div style="font-size:.85rem;color:var(--text);">Statut : <strong>${u.status==='active'?'Actif':'En attente'}</strong></div>
       </div>
       <div class="admin-card" style="padding:16px;">
@@ -4710,29 +4698,42 @@ function openClientDetail(userId){
 
   // Tab liste de courses
   if(dishes.length){
+    const uAdults=u.defaultAdults||u.defaultPersons||2;
+    const uChildren=u.defaultChildren||0;
     const map={};
-    const factor=(u.defaultPersons||2)/2;
+    const noQty={};
     const CAT_ORD=['Viandes & Poissons','Légumes','Fruits','Crémerie','Épicerie','Herbes & Épices','Autre'];
     dishes.forEach(d=>d.ingredients.forEach(ing=>{
-      const k=(typeof normalizeIngName==='function'?normalizeIngName(ing.name):ing.name.toLowerCase())+'||'+(ing.unit||'').toLowerCase();
-      if(!map[k])map[k]={name:typeof normalizeIngName==='function'?normalizeIngName(ing.name):ing.name,unit:ing.unit,cat:ing.cat||'Autre',qty2p:0};
-      map[k].qty2p+=ing.qty;
+      const normName=typeof normalizeIngName==='function'?normalizeIngName(ing.name):ing.name;
+      const raw=computeIngRaw(ing,uAdults,uChildren);
+      if(raw===null){
+        const nk=normName.toLowerCase();
+        if(!noQty[nk]) noQty[nk]={name:normName,cat:ing.cat||'Autre'};
+        return;
+      }
+      const k=normName.toLowerCase()+'||'+(ing.unit||'').toLowerCase();
+      if(!map[k])map[k]={name:normName,unit:ing.unit,cat:ing.cat||'Autre',rawQty:0};
+      map[k].rawQty+=raw;
     }));
     const bycat={};
     Object.values(map).forEach(ing=>{
       if(!bycat[ing.cat])bycat[ing.cat]=[];
-      bycat[ing.cat].push({name:ing.name,unit:ing.unit,qty:parseFloat((ing.qty2p*factor).toFixed(1))});
+      bycat[ing.cat].push({name:ing.name,unit:ing.unit,qty:roundFinalQty(ing.rawQty,ing.unit)});
+    });
+    Object.values(noQty).forEach(ing=>{
+      if(!bycat[ing.cat])bycat[ing.cat]=[];
+      bycat[ing.cat].push({name:ing.name,unit:'',qty:null});
     });
     const cats=CAT_ORD.filter(c=>bycat[c]).concat(Object.keys(bycat).filter(c=>!CAT_ORD.includes(c)));
     document.getElementById('modal-client-liste').innerHTML =
-      `<p style="font-size:.78rem;color:var(--muted);margin-bottom:16px;">Pour ${u.defaultPersons||2} personne${(u.defaultPersons||2)>1?'s':''} — ${dishes.length} plat${dishes.length>1?'s':''}</p>` +
+      `<p style="font-size:.78rem;color:var(--muted);margin-bottom:16px;">Pour ${uAdults} adulte${uAdults>1?'s':''}${uChildren>0?' + '+uChildren+' enfant'+(uChildren>1?'s':''):''} — ${dishes.length} plat${dishes.length>1?'s':''}</p>` +
       cats.map(cat=>`
         <div style="margin-bottom:16px;">
           <div style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--terracotta);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(184,115,85,.15);">${cat}</div>
           ${bycat[cat].sort((a,b)=>a.name.localeCompare(b.name)).map(ing=>`
             <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(45,74,50,.05);font-size:.83rem;">
               <span style="font-weight:300;">${escHtml(ing.name)}</span>
-              <span style="color:var(--green-mid);font-weight:500;">${ing.qty} ${ing.unit}</span>
+              <span style="color:var(--green-mid);font-weight:500;">${(ing.qty===null||ing.qty===undefined)?'à avoir':ing.qty+' '+ing.unit}</span>
             </div>`).join('')}
         </div>`).join('');
   } else {
@@ -5079,7 +5080,7 @@ function refreshIngPanel(dishId){
   container.innerHTML = dish.ingredients.map((ing,i)=>`
     <div class="dish-ing-row">
       <span class="ing-name">${ing.name}</span>
-      <span class="ing-qty">${ing.qty} ${ing.unit||''}</span>
+      <span class="ing-qty">${ingDisplayQty(ing)}</span>
       <button class="ing-del" onclick="event.stopPropagation();removeClientIng('${dishId}',${i})" title="Retirer">✕</button>
     </div>`).join('');
   // Mettre à jour le badge nb ingrédients sur la carte
@@ -5633,6 +5634,8 @@ function renderConservation(){
   list.innerHTML=sorted.map((dish,i)=>{
     const cons=dish.conservation||4;
     const congel=dish.congel||'non';
+    const freezeStatus=dish.freezeStatus||(congel==='oui'?'Recommandée':'Déconseillée');
+    const freezeDetail=dish.freezeDetail||'';
     const reheat=dish.reheat||'Réchauffer à feu doux ou au micro-ondes.';
     const eatDate=new Date(today);
     eatDate.setDate(today.getDate()+Math.floor(i*cons/dishes.length));
@@ -5648,7 +5651,7 @@ function renderConservation(){
       </div>
       <div class="cons-row"><span class="cons-icon">📅</span><span class="cons-text"><strong>Consommation conseillée :</strong> ${dayLabel}</span></div>
       <div class="cons-row"><span class="cons-icon">🕐</span><span class="cons-text"><strong>Conservation :</strong> ${cons} jour${cons>1?'s':''} au réfrigérateur</span></div>
-      <div class="cons-row"><span class="cons-icon">❄️</span><span class="cons-text"><strong>Congélation :</strong> ${congel==='oui'?'Possible — décongelez au frigo 12h avant consommation':congel==='partiel'?'Partiellement possible — voir les ingrédients':'Non recommandée pour ce plat'}</span></div>
+      <div class="cons-row"><span class="cons-icon">❄️</span><span class="cons-text"><strong>Congélation :</strong> ${freezeStatus}${freezeDetail?' — '+freezeDetail:''}</span></div>
       <div class="cons-row"><span class="cons-icon">🔥</span><span class="cons-text"><strong>Réchauffage :</strong> ${reheat}</span></div>
     </div>`;
   }).join('');
@@ -5680,6 +5683,7 @@ async function downloadConservationPDF(){
   sorted.forEach((dish,i)=>{
     const cons=dish.conservation||4;
     const congel=dish.congel||'non';
+    const freezeStatus=dish.freezeStatus||(congel==='oui'?'Recommandée':'Déconseillée');
     const reheat=dish.reheat||'Réchauffer à feu doux ou au micro-ondes.';
     const eatDate=new Date(today);
     eatDate.setDate(today.getDate()+Math.floor(i*cons/dishes.length));
@@ -5692,7 +5696,7 @@ async function downloadConservationPDF(){
       </div>
       <div class="row"><span class="row-icon">📅</span><span><strong>À consommer :</strong> ${dayLabel}</span></div>
       <div class="row"><span class="row-icon">🕐</span><span><strong>Conservation :</strong> ${cons} jour${cons>1?'s':''} au réfrigérateur</span></div>
-      <div class="row"><span class="row-icon">❄️</span><span><strong>Congélation :</strong> ${congel==='oui'?'Possible':'Non recommandée'}</span></div>
+      <div class="row"><span class="row-icon">❄️</span><span><strong>Congélation :</strong> ${freezeStatus}</span></div>
       <div class="row"><span class="row-icon">🔥</span><span><strong>Réchauffage :</strong> ${reheat}</span></div>
     </div>`;
   });
@@ -5893,14 +5897,15 @@ function emailClientWelcome(user){
 function emailClientApproved(user){
   sendEmail(EJS_CLIENT, user.email,
     "Votre compte Cook\'sUP est activé 🎉",
-    `Bonjour ${user.name},\n\nBonne nouvelle — votre compte est maintenant actif !\nConnectez-vous ici : ${APP_URL}\n\nVotre carte d'été Cook'sUP vous attend ☀️\n\nÀ très bientôt,\nImene — Cook\'sUP`
+    `Bonjour ${user.name},\n\nBonne nouvelle — votre compte est maintenant actif !\nConnectez-vous ici : ${APP_URL}\n\nVotre carte d'automne Cook'sUP vous attend 🍂\n\nÀ très bientôt,\nImene — Cook\'sUP`
   );
 }
 
-function emailAdminSelection(user, dishCount, persons){
+function emailAdminSelection(user, dishCount, adults, children){
+  const foyerTxt=adults+' adulte'+(adults>1?'s':'')+(children>0?' + '+children+' enfant'+(children>1?'s':''):'');
   sendEmail(EJS_ADMIN, ADMIN_EMAIL,
     `Nouvelle sélection — ${user.name}`,
-    `Bonjour Imene,\n\n${user.name} vient de valider sa sélection :\n${dishCount} plat${dishCount>1?'s':''} pour ${persons} personne${persons>1?'s':''}.\n\nConnectez-vous pour voir les détails.`
+    `Bonjour Imene,\n\n${user.name} vient de valider sa sélection :\n${dishCount} plat${dishCount>1?'s':''} pour ${foyerTxt}.\n\nConnectez-vous pour voir les détails.`
   );
 }
 
