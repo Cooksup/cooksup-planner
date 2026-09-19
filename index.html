@@ -459,6 +459,13 @@ body::before{
   transition:var(--transition);font-family:'DM Sans',sans-serif;
 }
 .nav-logout:hover{color:var(--error);}
+.nav-logout-icon{
+  display:none;background:transparent;border:none;cursor:pointer;
+  color:var(--muted);padding:6px;border-radius:50%;
+  align-items:center;justify-content:center;transition:var(--transition);
+}
+.nav-logout-icon svg{width:20px;height:20px;}
+.nav-logout-icon:hover,.nav-logout-icon:active{color:var(--error);background:rgba(176,58,46,.08);}
 
 /* ═══ PAGES ═══ */
 .app-body{padding-top:64px;min-height:100vh;}
@@ -635,6 +642,11 @@ body::before{
 .dish-meta{
   display:flex;gap:14px;font-size:.7rem;color:var(--muted);
   padding-top:10px;border-top:1px solid rgba(45,74,50,.05);
+  align-items:center;flex-wrap:wrap;
+}
+.dish-freeze-badge{
+  margin-left:auto;color:white;font-size:.62rem;font-weight:600;
+  padding:2px 8px;border-radius:10px;white-space:nowrap;
 }
 
 /* LIST CTA */
@@ -1795,6 +1807,7 @@ body::before{
   }
   .nav-name{display:none;}
   .nav-logout{display:none;}
+  .nav-logout-icon{display:flex;}
   .nav-avatar{
     width:32px;height:32px;font-size:.85rem;
     cursor:pointer;
@@ -2206,11 +2219,27 @@ body::before{
       <button class="nav-btn admin-style" id="navb-admin" style="display:none;" onclick="showPage('admin')">⚙ Admin<span class="nav-badge" id="nbadge-admin"></span></button>
     </div>
     <div class="nav-user">
+      <div class="notif-wrap" style="position:relative;">
+        <button class="nav-logout-icon" id="notif-bell-btn" onclick="toggleNotifPanel()" title="Notifications" aria-label="Notifications" style="display:flex;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="nav-badge" id="nbadge-notif" style="position:absolute;top:2px;right:2px;"></span>
+        </button>
+        <div id="notif-panel" style="display:none;position:absolute;right:0;top:38px;width:280px;background:white;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:10px;z-index:200;max-height:340px;overflow-y:auto;"></div>
+      </div>
       <div class="nav-avatar" id="nav-avatar">?</div>
       <div>
         <div class="nav-name" id="nav-name">—</div>
         <button class="nav-logout" onclick="doLogout()">déconnexion</button>
       </div>
+      <button class="nav-logout-icon" onclick="doLogout()" title="Se déconnecter" aria-label="Se déconnecter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 17l5-5-5-5M21 12H9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
   </nav>
   <div class="app-body">
@@ -2245,6 +2274,7 @@ body::before{
         <button onclick="openSelectionModal()" style="flex:1;min-width:130px;padding:11px 16px;background:white;color:var(--green-deep);border:1px solid var(--green-pale);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;">Ma sélection <span id="selection-badge" style="background:var(--green-deep);color:white;border-radius:10px;padding:1px 7px;font-size:.72rem;margin-left:4px;">0</span></button>
         <button id="voir-liste-btn" onclick="showPage('liste')" style="flex:1;min-width:130px;padding:11px 18px;background:var(--green-deep);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;">Voir ma liste →</button>
         <button id="confirmer-btn" onclick="confirmSelection()" style="flex:1;min-width:160px;padding:11px 20px;background:var(--terracotta);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;">✓ Confirmer</button>
+        <button onclick="clearSelection()" style="padding:11px 16px;background:transparent;color:var(--error);border:1px solid rgba(176,58,46,.3);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s;">✕ Supprimer ma sélection</button>
       </div>
       <div id="menu-categories-area"></div>
 
@@ -2290,14 +2320,10 @@ body::before{
 
     <!-- PAGE PLANNING (CLIENT) -->
     <div id="page-planning" class="page">
-      <div class="section-tag"><div class="section-line"></div><span class="section-label">Réservations</span></div>
-      <h2 class="page-title">Réserver <em>ma session</em></h2>
-      <p class="page-sub">Choisissez un créneau disponible pour votre session batch cooking</p>
-      <div class="planning-tabs">
-        <button class="ptab active" onclick="filterSlots('open')">📅 Disponibles</button>
-        <button class="ptab" onclick="filterSlots('mine')">📌 Mes réservations</button>
-      </div>
-      <div id="slots-client-area"><div class="no-content"><h3>Aucun créneau disponible</h3><p>Revenez bientôt !</p></div></div>
+      <div class="section-tag"><div class="section-line"></div><span class="section-label">Rendez-vous</span></div>
+      <h2 class="page-title">Mon <em>rendez-vous</em></h2>
+      <p class="page-sub">La date de votre prochaine session batch cooking, programmée par Imene</p>
+      <div id="slots-client-area"><div class="no-content"><h3>Aucun rendez-vous programmé</h3><p>Imene vous confirmera bientôt la date.</p></div></div>
     </div>
 
     <!-- PAGE MESSAGES (CLIENT) -->
@@ -2866,20 +2892,6 @@ body::before{
   </div>
 </div>
 
-<div id="modal-book-slot" class="modal-overlay hidden">
-  <div class="modal-box sm">
-    <button class="modal-close" onclick="closeModal('modal-book-slot')">✕</button>
-    <h2 class="modal-title">Réserver <em>ce créneau</em></h2>
-    <p class="modal-sub" id="book-slot-subtitle">Confirmez votre demande de réservation</p>
-    <div class="form-group"><label class="form-label">Un message pour Imene ? (optionnel)</label><textarea id="book-slot-note" class="form-input" rows="3" placeholder="Régime particulier, préférences, questions…" style="height:80px;resize:none;"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-book-slot')">Annuler</button>
-      <button class="btn btn-primary" onclick="confirmBookSlot()">Envoyer la demande</button>
-    </div>
-    <input type="hidden" id="book-slot-id">
-  </div>
-</div>
-
 <!-- MODAL FICHE CLIENT -->
 <div id="modal-client-detail" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:720px;">
@@ -3006,6 +3018,13 @@ function classifyAisle(name){
   }
   return 'Épicerie';
 }
+const FREEZE_BADGE_COLORS={'Recommandée':'#4C7A3D','Possible avec précaution':'#C9A227','Déconseillée':'#B85C38'};
+function dishCardExtras(dish){
+  const accomp=dish.desc?`<div class="dish-desc">🍚 Servi avec : ${dish.desc}</div>`:'';
+  const fColor=FREEZE_BADGE_COLORS[dish.freezeStatus]||'#8A8578';
+  const freezeBadge=dish.freezeStatus?`<span class="dish-freeze-badge" style="background:${fColor}">❄ ${dish.freezeStatus}</span>`:'';
+  return {accomp, freezeBadge};
+}
 function parseFridgeDays(duree){
   duree=duree||'';
   const m2=duree.match(/(\d+)\s*à\s*(\d+)\s*jour/);
@@ -3037,7 +3056,7 @@ function buildIngredientFromRow(row){
 async function loadDishesFromSupabaseDirect(){
   try{
     const [rDishes,rIng,rAllerg,rCons]=await Promise.all([
-      fetchWithTimeout(`${SUPA_URL}/rest/v1/dishes?select=id,name,cat`,{headers:SUPA_H},12000),
+      fetchWithTimeout(`${SUPA_URL}/rest/v1/dishes?select=id,name,cat,description`,{headers:SUPA_H},12000),
       fetchWithTimeout(`${SUPA_URL}/rest/v1/recipe_ingredients?select=dish_id,ingredient_name,ingredient_type,unit,qty_adult,qty_child,palier`,{headers:SUPA_H},12000),
       fetchWithTimeout(`${SUPA_URL}/rest/v1/recipe_allergens?select=dish_id,allergen`,{headers:SUPA_H},12000),
       fetchWithTimeout(`${SUPA_URL}/rest/v1/recipe_conservation?select=*`,{headers:SUPA_H},12000),
@@ -3067,7 +3086,7 @@ async function loadDishesFromSupabaseDirect(){
       const freezeStatus=cons.freeze_status||'Possible avec précaution';
       return {
         id:d.id, name:d.name, cat:d.cat,
-        desc:'', time:'', emoji:CAT_EMOJI[d.cat]||'🍽', imageBase64:'',
+        desc:d.description||'', time:'', emoji:CAT_EMOJI[d.cat]||'🍽', imageBase64:'',
         conservation:parseFridgeDays(cons.fridge_duration),
         congel:freezeStatus!=='Déconseillée'?'oui':'non',
         reheat:cons.reheat_instructions||'Réchauffer à feu doux ou au micro-ondes.',
@@ -3426,6 +3445,8 @@ async function doRegister(){
   const email=document.getElementById('reg-email').value.trim();
   const pwd=document.getElementById('reg-pwd').value;
   if(!name||!email||!pwd){showMsg('register-msg','Remplissez tous les champs.');return;}
+  const emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+  if(!emailOk){showMsg('register-msg','Adresse email invalide (ex : nom@exemple.com).');return;}
   if(pwd.length<6){showMsg('register-msg','Mot de passe trop court (6 caractères min).');return;}
   if(STATE.users.find(u=>u.email===email)){showMsg('register-msg','Cet email est déjà utilisé.');return;}
   showMsg('register-msg','Enregistrement en cours…','info');
@@ -3468,6 +3489,7 @@ function loginUser(user){
     document.getElementById('navb-profil').style.display='none';
     document.getElementById('navb-admin').textContent='⚙ Admin';
     document.querySelector('.nav-logo').addEventListener('click',()=>showPage('admin'));
+    const nb=document.getElementById('notif-bell-btn'); if(nb) nb.style.display='none';
   }
   nbAdults=user.defaultAdults||user.defaultPersons||2;
   nbChildren=user.defaultChildren||0;
@@ -3583,6 +3605,7 @@ function checkMenuNotif(){
   const seen=getLocal('seenCats_'+currentUser.id)||[];
   const hasNew=STATE.categories.filter(c=>c.published&&!seen.includes(c.id)).length>0;
   if(hasNew){document.getElementById('notif-banner').style.display='flex';document.getElementById('nbadge-menu').classList.add('show');document.getElementById('mbadge-menu')?.classList.add('show');}
+  renderNotifCenter();
 }
 
 function markMenuNotifSeen(){
@@ -3592,6 +3615,62 @@ function markMenuNotifSeen(){
   document.getElementById('notif-banner').style.display='none';
   document.getElementById('nbadge-menu').classList.remove('show');
   document.getElementById('mbadge-menu')?.classList.remove('show');
+  renderNotifCenter();
+}
+
+// ══════════════════════════════════════════════
+//  CENTRE DE NOTIFICATIONS
+// ══════════════════════════════════════════════
+function getNotifItems(){
+  if(!currentUser||currentUser.role==='admin') return [];
+  const items=[];
+  const seenCats=getLocal('seenCats_'+currentUser.id)||[];
+  const newCats=STATE.categories.filter(c=>c.published&&!seenCats.includes(c.id));
+  if(newCats.length){
+    items.push({icon:'🍂',text:'Nouvelle carte disponible — découvrez les nouveaux plats',action:"showPage('menu')"});
+  }
+  const unreadMsgs=STATE.messages.filter(m=>m.threadId===currentUser.id&&!m.readByClient).length;
+  if(unreadMsgs>0){
+    items.push({icon:'💬',text:unreadMsgs+' nouveau'+(unreadMsgs>1?'x':'')+' message'+(unreadMsgs>1?'s':'')+' d\'Imene',action:"showPage('messages')"});
+  }
+  if(currentUser.appointmentDate){
+    const d=new Date(currentUser.appointmentDate);
+    const days=Math.ceil((d-new Date())/86400000);
+    if(days>=0 && days<=7){
+      items.push({icon:'📅',text:'Rendez-vous '+(days===0?'aujourd\'hui':days===1?'demain':'dans '+days+' jours')+' — pensez à choisir votre menu',action:"showPage('planning')"});
+    }
+  }
+  return items;
+}
+function renderNotifCenter(){
+  const badge=document.getElementById('nbadge-notif');
+  const items=getNotifItems();
+  if(badge){
+    if(items.length){badge.textContent=items.length>9?'9+':items.length;badge.classList.add('show');}
+    else{badge.classList.remove('show');}
+  }
+  const panel=document.getElementById('notif-panel');
+  if(!panel) return;
+  panel.innerHTML=items.length
+    ? items.map(it=>`<div onclick="${it.action};closeNotifPanel();" style="display:flex;gap:10px;align-items:flex-start;padding:10px 6px;border-bottom:1px solid rgba(45,74,50,.06);cursor:pointer;font-size:.8rem;color:var(--text);"><span style="font-size:1.1rem;">${it.icon}</span><span>${it.text}</span></div>`).join('')
+    : `<div style="padding:16px 8px;text-align:center;font-size:.8rem;color:var(--muted);">Aucune notification pour le moment</div>`;
+}
+function toggleNotifPanel(){
+  const panel=document.getElementById('notif-panel');
+  if(!panel) return;
+  const isOpen=panel.style.display==='block';
+  if(isOpen){ panel.style.display='none'; return; }
+  renderNotifCenter();
+  panel.style.display='block';
+  setTimeout(()=>document.addEventListener('click',closeNotifPanelOnClickAway,{once:true}),0);
+}
+function closeNotifPanel(){
+  const panel=document.getElementById('notif-panel');
+  if(panel) panel.style.display='none';
+}
+function closeNotifPanelOnClickAway(e){
+  const wrap=document.querySelector('.notif-wrap');
+  if(wrap && !wrap.contains(e.target)) closeNotifPanel();
 }
 
 function dismissMenuNotif(){markMenuNotifSeen();}
@@ -3645,15 +3724,32 @@ function ingDisplayQty(ing){
 // ══════════════════════════════════════════════
 function getSelections(){return STATE.selections[currentUser?.id]?.dishIds||[];}
 
+const MAX_DISHES_SELECTION=5;
 function toggleDish(id){
   let sel=getSelections();
-  sel=sel.includes(id)?sel.filter(x=>x!==id):[...sel,id];
+  const alreadySelected=sel.includes(id);
+  if(!alreadySelected && sel.length>=MAX_DISHES_SELECTION){
+    showToast(`Maximum ${MAX_DISHES_SELECTION} plats — désélectionnez-en un pour en choisir un autre`,'error');
+    return;
+  }
+  sel=alreadySelected?sel.filter(x=>x!==id):[...sel,id];
   if(!STATE.selections[currentUser.id])STATE.selections[currentUser.id]={};
   STATE.selections[currentUser.id].dishIds=sel;
   save.selections();
   document.querySelectorAll(`.dish-card[data-id="${id}"]`).forEach(c=>c.classList.toggle('selected',sel.includes(id)));
   updateSelectedUI(sel);
   // Notification envoyée uniquement à la confirmation (voir confirmSelection)
+}
+
+async function clearSelection(){
+  if(!currentUser) return;
+  if(!confirm('Supprimer toute votre sélection actuelle ?')) return;
+  if(!STATE.selections[currentUser.id]) STATE.selections[currentUser.id]={};
+  STATE.selections[currentUser.id].dishIds=[];
+  await save.selections();
+  document.querySelectorAll('.dish-card.selected').forEach(c=>c.classList.remove('selected'));
+  updateSelectedUI([]);
+  showToast('Sélection vidée ✓','success');
 }
 
 
@@ -3745,7 +3841,7 @@ function updateSelectedUI(sel){
   // Compteur dans la persons-bar
   const badge=document.getElementById('selected-count');
   if(badge){
-    badge.textContent=n>0?n+' plat'+(n>1?'s':'')+' sélectionné'+(n>1?'s':''):'';
+    badge.textContent=n>0?n+'/'+MAX_DISHES_SELECTION+' plat'+(n>1?'s':'')+' sélectionné'+(n>1?'s':''):'';
     badge.style.display=n>0?'inline-flex':'none';
   }
   // Barre d'actions (voir liste + confirmer)
@@ -3753,7 +3849,7 @@ function updateSelectedUI(sel){
   if(actionBar) actionBar.style.display=n>0?'flex':'none';
   // Badge compteur sur le bouton Ma sélection
   const selBadge=document.getElementById('selection-badge');
-  if(selBadge) selBadge.textContent=n;
+  if(selBadge) selBadge.textContent=n+'/'+MAX_DISHES_SELECTION;
 }
 
 // ══════════════════════════════════════════════
@@ -3827,8 +3923,8 @@ function renderMenu(){
           <div class="dish-body">
             <div class="dish-cat-tag">${dish.cat}</div>
             <div class="dish-name">${dish.name}</div>
-            <div class="dish-desc">${dish.desc||''}</div>
-            <div class="dish-meta"><span>⏱ ${dish.time}</span><span>${dish.ingredients.length} ingr.</span></div>
+            ${dishCardExtras(dish).accomp}
+            <div class="dish-meta">${dish.time?`<span>⏱ ${dish.time}</span>`:''}<span>${dish.ingredients.length} ingr.</span>${dishCardExtras(dish).freezeBadge}</div>
             ${alertBadge}
           </div>
         </div>
@@ -4081,61 +4177,27 @@ function shareWhatsApp(){
 }
 
 // ══════════════════════════════════════════════
-//  PLANNING (client)
+//  RENDEZ-VOUS (client) — renseigné uniquement par Imene, plus de réservation libre
 // ══════════════════════════════════════════════
-let slotFilter='open';
-
-function filterSlots(f){
-  slotFilter=f;
-  document.querySelectorAll('.ptab').forEach((t,i)=>{t.classList.toggle('active',['open','mine'][i]===f);});
-  renderClientPlanning();
-}
-
 function renderClientPlanning(){
   const area=document.getElementById('slots-client-area');
-  let slots=[];
-  if(slotFilter==='open') slots=STATE.slots.filter(s=>s.status==='open').sort((a,b)=>a.date.localeCompare(b.date));
-  else slots=STATE.slots.filter(s=>s.requestedBy===currentUser.id).sort((a,b)=>a.date.localeCompare(b.date));
-  if(!slots.length){area.innerHTML='<div class="no-content"><h3>'+(slotFilter==='open'?'Aucun créneau disponible':'Aucune réservation')+'</h3><p>'+(slotFilter==='open'?'Revenez bientôt !':'Réservez un créneau depuis "Disponibles"')+'</p></div>';return;}
-  area.innerHTML='<div class="slots-grid">'+slots.map(s=>{
-    const d=new Date(s.date+'T12:00:00');
-    const df=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-    const st=s.status;
-    const canBook=st==='open';
-    return `<div class="slot-card ${st}" onclick="${canBook?`openBookSlot('${s.id}')`:''}">
-      <div class="slot-date">${df}</div>
-      <div class="slot-time">⏰ ${s.time} · ${s.duration}</div>
-      ${s.label?`<div class="slot-label">"${s.label}"</div>`:''}
-      <span class="slot-status ${st}">${{open:'📅 Disponible',requested:'⏳ Demande envoyée',confirmed:'✅ Confirmé',cancelled:'❌ Annulé'}[st]||st}</span>
-      ${st==='requested'?'<div style="font-size:0.74rem;color:var(--muted);margin-top:6px;">En attente de confirmation d\'Imene</div>':''}
+  if(!area) return;
+  const apptDate=currentUser?.appointmentDate;
+  const apptNote=currentUser?.appointmentNote||'';
+  if(!apptDate){
+    area.innerHTML='<div class="no-content"><h3>Aucun rendez-vous programmé</h3><p>Imene vous confirmera bientôt la date de votre prochaine session.</p></div>';
+    return;
+  }
+  const d=new Date(apptDate+'T12:00:00');
+  const df=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const days=Math.ceil((new Date(apptDate+'T00:00:00')-new Date(new Date().toDateString()))/86400000);
+  const daysLabel=days<0?'Passé':days===0?'Aujourd\'hui':days===1?'Demain':'Dans '+days+' jours';
+  area.innerHTML=`<div class="slot-card confirmed" style="max-width:420px;">
+      <div class="slot-date">📅 ${df}</div>
+      <span class="slot-status confirmed">✅ ${daysLabel}</span>
+      ${apptNote?`<div style="font-size:.82rem;color:var(--text);margin-top:10px;padding-top:10px;border-top:1px solid rgba(45,74,50,.08);">${escHtml(apptNote)}</div>`:''}
+      <div style="font-size:.76rem;color:var(--muted);margin-top:10px;">Pensez à choisir votre menu avant cette date, depuis l'onglet Menus.</div>
     </div>`;
-  }).join('')+'</div>';
-}
-
-function openBookSlot(slotId){
-  const slot=STATE.slots.find(s=>s.id===slotId); if(!slot)return;
-  const d=new Date(slot.date+'T12:00:00');
-  const df=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('book-slot-subtitle').textContent=`${df} à ${slot.time} · ${slot.duration}`;
-  document.getElementById('book-slot-id').value=slotId;
-  document.getElementById('book-slot-note').value='';
-  openModal('modal-book-slot');
-}
-
-function confirmBookSlot(){
-  const slotId=document.getElementById('book-slot-id').value;
-  const note=document.getElementById('book-slot-note').value.trim();
-  const idx=STATE.slots.findIndex(s=>s.id===slotId); if(idx<0)return;
-  STATE.slots[idx].status='requested';
-  STATE.slots[idx].requestedBy=currentUser.id;
-  STATE.slots[idx].clientNote=note;
-  save.slots();
-  closeModal('modal-book-slot');
-  renderClientPlanning();
-  showToast('Demande envoyée à Imene ! ✓','success');
-  tryNotifyByEmail('Nouvelle demande de réservation Cook\'sUP',
-    `Client : ${currentUser.name} (${currentUser.email})\nCréneau : ${STATE.slots[idx].date} à ${STATE.slots[idx].time}\nMessage : ${note||'Aucun'}`);
-  updateAdminBadges();
 }
 
 // ══════════════════════════════════════════════
@@ -4676,6 +4738,51 @@ function renderAdminClients(){
 }
 
 // ── Ouvrir la fiche client ──
+async function saveClientAppointment(userId){
+  const idx=STATE.users.findIndex(u=>u.id===userId);
+  if(idx<0) return;
+  const date=document.getElementById('rdv-date-'+userId).value;
+  const note=document.getElementById('rdv-note-'+userId).value.trim();
+  if(!date){showToast('Choisissez une date','error');return;}
+  STATE.users[idx].appointmentDate=date;
+  STATE.users[idx].appointmentNote=note;
+  await save.users();
+  if(currentUser && currentUser.id===userId){ currentUser.appointmentDate=date; currentUser.appointmentNote=note; }
+  showToast('Rendez-vous enregistré ✓','success');
+  openClientDetail(userId);
+}
+async function clearClientAppointment(userId){
+  const idx=STATE.users.findIndex(u=>u.id===userId);
+  if(idx<0) return;
+  if(!confirm('Supprimer ce rendez-vous ?')) return;
+  STATE.users[idx].appointmentDate='';
+  STATE.users[idx].appointmentNote='';
+  await save.users();
+  if(currentUser && currentUser.id===userId){ currentUser.appointmentDate=''; currentUser.appointmentNote=''; }
+  showToast('Rendez-vous supprimé','success');
+  openClientDetail(userId);
+}
+
+async function adjustClientHousehold(userId, field, delta){
+  const idx=STATE.users.findIndex(u=>u.id===userId);
+  if(idx<0) return;
+  const key='default'+field; // defaultAdults / defaultChildren
+  const min=field==='Adults'?1:0;
+  const current=STATE.users[idx][key] ?? (field==='Adults'?(STATE.users[idx].defaultPersons||2):0);
+  const next=Math.max(min,Math.min(12,current+delta));
+  STATE.users[idx][key]=next;
+  await save.users();
+  const el=document.getElementById('mch-'+field.toLowerCase()+'-'+userId);
+  if(el) el.textContent=next;
+  // Si c'est le client actuellement connecté, on synchronise aussi son compteur live
+  if(currentUser && currentUser.id===userId){
+    currentUser[key]=next;
+    if(field==='Adults'){ nbAdults=next; document.getElementById('adults-display').textContent=nbAdults; }
+    else { nbChildren=next; document.getElementById('children-display').textContent=nbChildren; }
+  }
+  showToast('Foyer mis à jour ✓','success');
+}
+
 function openClientDetail(userId){
   const u = STATE.users.find(x=>x.id===userId);
   if(!u) return;
@@ -4692,7 +4799,19 @@ function openClientDetail(userId){
       <div class="admin-card" style="padding:16px;">
         <div style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--terracotta);margin-bottom:8px;">Compte</div>
         <div style="font-size:.85rem;color:var(--text);margin-bottom:4px;">Inscrit le <strong>${new Date(u.createdAt).toLocaleDateString('fr-FR')}</strong></div>
-        <div style="font-size:.85rem;color:var(--text);margin-bottom:4px;">Foyer : <strong>${u.defaultAdults||u.defaultPersons||2} adulte${(u.defaultAdults||u.defaultPersons||2)>1?'s':''}${(u.defaultChildren||0)>0?' + '+(u.defaultChildren||0)+' enfant'+(u.defaultChildren>1?'s':''):''}</strong></div>
+        <div style="font-size:.85rem;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span>Foyer :</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;">
+            <button class="persons-btn" style="width:22px;height:22px;font-size:.75rem;" onclick="adjustClientHousehold('${userId}','Adults',-1)">−</button>
+            <strong id="mch-adults-${userId}">${u.defaultAdults||u.defaultPersons||2}</strong> adulte(s)
+            <button class="persons-btn" style="width:22px;height:22px;font-size:.75rem;" onclick="adjustClientHousehold('${userId}','Adults',1)">+</button>
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:6px;">
+            <button class="persons-btn" style="width:22px;height:22px;font-size:.75rem;" onclick="adjustClientHousehold('${userId}','Children',-1)">−</button>
+            <strong id="mch-children-${userId}">${u.defaultChildren||0}</strong> enfant(s)
+            <button class="persons-btn" style="width:22px;height:22px;font-size:.75rem;" onclick="adjustClientHousehold('${userId}','Children',1)">+</button>
+          </span>
+        </div>
         <div style="font-size:.85rem;color:var(--text);">Statut : <strong>${u.status==='active'?'Actif':'En attente'}</strong></div>
       </div>
       <div class="admin-card" style="padding:16px;">
@@ -4759,20 +4878,15 @@ function openClientDetail(userId){
     document.getElementById('modal-client-liste').innerHTML = '<p style="font-size:.83rem;color:var(--muted);">Aucune sélection — pas de liste.</p>';
   }
 
-  // Tab planning
-  const clientSlots = STATE.slots.filter(s=>s.requestedBy===userId||s.confirmedFor===userId);
-  document.getElementById('modal-client-planning').innerHTML = clientSlots.length
-    ? clientSlots.sort((a,b)=>a.date.localeCompare(b.date)).map(s=>{
-        const d=new Date(s.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-        const statusLabel={open:'Libre',requested:'Demande envoyée',confirmed:'Confirmé',cancelled:'Annulé'};
-        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(45,74,50,.06);">
-          <div style="flex:1;">
-            <div style="font-size:.88rem;font-weight:500;color:var(--dark);text-transform:capitalize;">${d}</div>
-            <div style="font-size:.76rem;color:var(--muted);">${s.time} · ${s.duration}${s.label?' · '+s.label:''}</div>
-          </div>
-          <span class="slot-status ${s.status}">${statusLabel[s.status]||s.status}</span>
-        </div>`;}).join('')
-    : '<p style="font-size:.83rem;color:var(--muted);">Aucune réservation pour ce client.</p>';
+  // Tab planning — RDV programmé par Imene (remplace l'ancien système de créneaux)
+  document.getElementById('modal-client-planning').innerHTML = `
+    <div class="admin-card" style="padding:16px;max-width:360px;">
+      <div style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--terracotta);margin-bottom:10px;">Rendez-vous programmé</div>
+      <div class="form-group"><label class="form-label">Date</label><input type="date" id="rdv-date-${userId}" class="form-input" value="${u.appointmentDate||''}"></div>
+      <div class="form-group"><label class="form-label">Note (optionnel)</label><input type="text" id="rdv-note-${userId}" class="form-input" placeholder="Ex : session de 3h, apporter les courses" value="${escHtml(u.appointmentNote||'')}"></div>
+      <button class="btn btn-primary" onclick="saveClientAppointment('${userId}')">Enregistrer le rendez-vous</button>
+      ${u.appointmentDate?`<button class="btn btn-ghost" style="margin-top:8px;color:var(--error);" onclick="clearClientAppointment('${userId}')">Supprimer le rendez-vous</button>`:''}
+    </div>`;
 
   // Tab profil alimentaire
   const fp = u.foodProfile || {};
@@ -5064,8 +5178,8 @@ function renderApercuAdmin(){
         <div class="dish-body">
           <div class="dish-cat-tag">${dish.cat}</div>
           <div class="dish-name">${dish.name}</div>
-          <div class="dish-desc">${dish.desc||''}</div>
-          <div class="dish-meta"><span>⏱ ${dish.time}</span><span>${dish.ingredients.length} ingr.</span></div>
+          ${dishCardExtras(dish).accomp}
+          <div class="dish-meta">${dish.time?`<span>⏱ ${dish.time}</span>`:''}<span>${dish.ingredients.length} ingr.</span>${dishCardExtras(dish).freezeBadge}</div>
         </div></div>`;
     });
     html += '</div></div>';
